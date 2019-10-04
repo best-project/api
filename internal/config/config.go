@@ -10,5 +10,5 @@ package config
 // Example of valid tag: `valid:"alphanum,required"`
 // Combining many tags: tags have to be separated by WHITESPACE: `json:"port" default:"8080" valid:"required"`
 type Config struct {
-	Port string ``
+	Port string
 }

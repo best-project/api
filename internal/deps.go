@@ -5,4 +5,5 @@ import (
 	_ "github.com/vrischmann/envconfig"
 	_ "github.com/mcuadros/go-defaults"
 	_ "github.com/asaskevich/govalidator"
+	_ "github.com/jinzhu/gorm"
 )
