@@ -15,7 +15,7 @@ func main() {
 	fatalOnError(err)
 
 	srv := server.NewServer()
-	http.ListenAndServe(":8080", srv.Handle())
+	fatalOnError(http.ListenAndServe(":8080", srv.Handle()))
 }
 
 func fatalOnError(err error) {

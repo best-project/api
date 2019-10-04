@@ -31,9 +31,7 @@ func (srv *Server) Handle() http.Handler {
 		w.Write([]byte("200"))
 	})))
 
-	n := negroni.New(negroni.NewRecovery())
-	n.UseHandler(rtr)
-	return n
+	return rtr
 }
 
 func (srv *Server) writeResponseCode(w http.ResponseWriter, code int) {
