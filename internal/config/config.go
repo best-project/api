@@ -11,4 +11,15 @@ package config
 // Combining many tags: tags have to be separated by WHITESPACE: `json:"port" default:"8080" valid:"required"`
 type Config struct {
 	Port string
+
+	DbHost string
+	DbUser string
+	DbPass string
+	DbName string
+}
+
+func NewConfig() *Config {
+	return  &Config{
+		Port: "8080",
+	}
 }

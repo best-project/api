@@ -1,10 +1,9 @@
 package storage
 
 import (
-	"database/sql"
+	"github.com/best-project/api/internal/model"
 )
 
-type CourseStorage struct {
-	db sql.DB
+func (db *Database) getCourse(id string) *model.Course {
+	return &model.Course{}
 }
-

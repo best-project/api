@@ -7,15 +7,19 @@ import (
 	"github.com/sirupsen/logrus"
 	"encoding/json"
 	"strconv"
+	"github.com/jinzhu/gorm"
+	"github.com/best-project/api/internal/storage"
 )
 
 type Server struct {
 	logger logrus.FieldLogger
+	db     *storage.Database
 }
 
-func NewServer() *Server {
+func NewServer(db *storage.Database) *Server {
 	return &Server{
 		logger: logrus.New(),
+		db:     db,
 	}
 }
 
@@ -28,8 +32,8 @@ func (srv *Server) Handle() http.Handler {
 
 	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("200"))
-	})))
+			w.Write([]byte("200"))
+		})))
 
 	return rtr
 }

@@ -21,5 +21,5 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(model.User{Username: name, Password: pass})
 
-	srv.writeResponseCode(w, http.StatusOK)
+	srv.writeJSONResponse(w, http.StatusOK, &model.User{})
 }

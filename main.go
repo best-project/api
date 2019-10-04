@@ -3,24 +3,25 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"database/sql"
 	"github.com/best-project/api/internal/server"
 	"github.com/sirupsen/logrus"
+	"github.com/best-project/api/internal/storage"
+	"github.com/best-project/api/internal/config"
 )
 
 func main() {
-	fmt.Println("hello world")
+	cfg := config.NewConfig()
 
-	_, err := sql.Open("mysql", "root:1234@/litdb")
+	db, err := storage.NewDatabase(cfg)
 	fatalOnError(err)
 
-	srv := server.NewServer()
-	fatalOnError(http.ListenAndServe(":8080", srv.Handle()))
+	srv := server.NewServer(db)
+	fatalOnError(http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), srv.Handle()))
 }
 
 func fatalOnError(err error) {
 	if err != nil {
-		// change to Fatal
+		// TODO: change to Fatal
 		logrus.Print(err.Error())
 	}
 }
