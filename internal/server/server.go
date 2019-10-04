@@ -1,14 +1,13 @@
 package server
 
 import (
-	"github.com/urfave/negroni"
-	"net/http"
+	"encoding/json"
+	"github.com/best-project/api/internal/storage"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
-	"encoding/json"
+	"github.com/urfave/negroni"
+	"net/http"
 	"strconv"
-	"github.com/jinzhu/gorm"
-	"github.com/best-project/api/internal/storage"
 )
 
 type Server struct {

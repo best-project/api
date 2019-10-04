@@ -1,10 +1,11 @@
 package storage
 
 import (
-	"github.com/jinzhu/gorm"
-	"github.com/best-project/api/internal/config"
-	"github.com/pkg/errors"
 	"fmt"
+	"github.com/best-project/api/internal/config"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
 type Database struct {

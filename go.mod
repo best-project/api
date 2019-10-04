@@ -9,6 +9,7 @@ require (
 	github.com/jinzhu/gorm v1.9.11
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mcuadros/go-defaults v1.1.0
+	github.com/pkg/errors v0.8.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/negroni v1.0.0
 	github.com/vrischmann/envconfig v1.2.0

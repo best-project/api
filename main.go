@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"github.com/best-project/api/internal/server"
-	"github.com/sirupsen/logrus"
-	"github.com/best-project/api/internal/storage"
 	"github.com/best-project/api/internal/config"
+	"github.com/best-project/api/internal/server"
+	"github.com/best-project/api/internal/storage"
+	"github.com/sirupsen/logrus"
+	"net/http"
 )
 
 func main() {

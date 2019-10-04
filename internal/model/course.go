@@ -1,7 +1,7 @@
 package model
 
 type Course struct {
-	Id string
+	Id   string
 	Name string
 	//data
 }

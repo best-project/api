@@ -1,10 +1,9 @@
 package model
 
 type User struct {
-	Id string
+	Id       string
 	Username string
 	Password string
-	Avatar string
+	Avatar   string
 	MyCourse []string
-
 }

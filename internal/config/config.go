@@ -1,6 +1,5 @@
 package config
 
-
 // Config provide helm broker configuration
 // Supported tags:
 //	- json: 		github.com/ghodss/yaml
@@ -19,7 +18,7 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	return  &Config{
+	return &Config{
 		Port: "8080",
 	}
 }

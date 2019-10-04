@@ -1,9 +1,9 @@
 package server
 
 import (
-	"net/http"
 	"fmt"
 	"github.com/best-project/api/internal/model"
+	"net/http"
 )
 
 func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
