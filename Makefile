@@ -1,24 +1,26 @@
 APP_NAME = api
 
 .PHONY: build
-build: fmt vet
+build:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api main.go
-	docker build -t $(APP_NAME) .
+	mv api deploy/
+	docker build -t $(APP_NAME) deploy/
+	rm deploy/api
 
 .PHONY: run
 run:
-	docker run -p 8080:8080 $(APP_NAME)
+	docker run -p $(PORT):$(PORT) $(APP_NAME)
 
-# Run go fmt against code
+.PHONY: start
+start: format build run
+
 .PHONY: format
 format: fmt vet
 
-# Run go fmt against code
 .PHONY: fmt
 fmt:
 	go fmt ./...
 
-# Run go vet against code
 .PHONY: vet
 vet:
 	go vet ./...

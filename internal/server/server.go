@@ -2,8 +2,11 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/best-project/api/internal/converter"
 	"github.com/best-project/api/internal/storage"
 	"github.com/gorilla/mux"
+	"github.com/madebyais/facebook-go-sdk"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"net/http"
@@ -12,13 +15,35 @@ import (
 
 type Server struct {
 	logger logrus.FieldLogger
+	fb     facebook.Interface
 	db     *storage.Database
+
+	host string
+
+	converter *converter.Converter
+
+	fbCallbackURL        string
+	instagramCallbackURL string
 }
 
-func NewServer(db *storage.Database) *Server {
+const (
+	fbEndpoint        = "/register/fb/callback"
+	instagramEndpoint = "/register/instagram/callback"
+)
+
+func NewServer(db *storage.Database, fb facebook.Interface) *Server {
+	host := "https://secret-cliffs-62699.herokuapp.com/"
+
 	return &Server{
 		logger: logrus.New(),
+		fb:     fb,
 		db:     db,
+
+		converter: converter.NewConverter(),
+
+		host:                 host,
+		fbCallbackURL:        fmt.Sprintf("%s%s", host, fbEndpoint),
+		instagramCallbackURL: fmt.Sprintf("%s%s", host, instagramEndpoint),
 	}
 }
 
@@ -26,15 +51,27 @@ func NewServer(db *storage.Database) *Server {
 func (srv *Server) Handle() http.Handler {
 	var rtr = mux.NewRouter()
 
-	rtr.Path("/user/create").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.createUser)))
-	rtr.Path("/user").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getUser)))
+	rtr.Path("/register/user").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.createUser)))
 
-	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(
-		func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("200"))
-		})))
+	rtr.Path("/register/fb").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToFb)))
+	rtr.Path(fbEndpoint).Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.createUserFb)))
+
+	rtr.Path("/register/instagram").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToInstagram)))
+	rtr.Path(instagramEndpoint).Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.createUserInstagram)))
+
+	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.createCourse)))
+
+	rtr.Path("/user/{name}").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getUser)))
+	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getCourse)))
+
+	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.statusHandler)))
 
 	return rtr
+}
+
+func (srv *Server) statusHandler(w http.ResponseWriter, r *http.Request) {
+	srv.writeResponseCode(w, http.StatusOK)
+	return
 }
 
 func (srv *Server) writeResponseCode(w http.ResponseWriter, code int) {
@@ -43,11 +80,25 @@ func (srv *Server) writeResponseCode(w http.ResponseWriter, code int) {
 	w.Write([]byte(strconv.Itoa(code)))
 }
 
-func (srv *Server) writeJSONResponse(w http.ResponseWriter, code int, object interface{}) {
-	writeResponse(w, code, object)
+func (srv *Server) writeResponseBody(w http.ResponseWriter, code int, body []byte) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(body)
 }
 
-func writeResponse(w http.ResponseWriter, code int, object interface{}) {
+func writeErrorResponse(w http.ResponseWriter, code int, err error) {
+	dto := struct {
+		Message string
+		Code    int
+	}{
+		Message: err.Error(),
+		Code:    code,
+	}
+	writeResponseObject(w, code, dto)
+	return
+}
+
+func writeResponseObject(w http.ResponseWriter, code int, object interface{}) {
 	data, err := json.Marshal(object)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -58,47 +109,3 @@ func writeResponse(w http.ResponseWriter, code int, object interface{}) {
 	w.WriteHeader(code)
 	w.Write(data)
 }
-
-func (srv *Server) writeErrorResponse(w http.ResponseWriter, code int, errorMsg, desc string) {
-	if srv.logger != nil {
-		srv.logger.Warnf("Server responds with error: [HTTP %d]: [%s] [%s]", code, errorMsg, desc)
-	}
-	writeErrorResponse(w, code, errorMsg, desc)
-}
-
-// writeErrorResponse writes error response compatible with OpenServiceBroker API specification.
-func writeErrorResponse(w http.ResponseWriter, code int, errorMsg, desc string) {
-	dto := struct {
-		// Error is a machine readable info on an error.
-		// As of 2.13 Open Broker API spec it's NOT passed to entity querying the catalog.
-		Error string `json:"error,optional"`
-
-		// Desc is a meaningful error message explaining why the request failed.
-		// see: https://github.com/openservicebrokerapi/servicebroker/blob/v2.13/spec.md#broker-errors
-		Desc string `json:"description,optional"`
-	}{}
-
-	if errorMsg != "" {
-		dto.Error = errorMsg
-	}
-
-	if desc != "" {
-		dto.Desc = desc
-	}
-	writeResponse(w, code, &dto)
-}
-
-//func httpBodyToDTO(r *http.Request, object interface{}) error {
-//	body, err := ioutil.ReadAll(r.Body)
-//	if err != nil {
-//		return err
-//	}
-//	defer r.Body.Close()
-//
-//	err = json.Unmarshal(body, object)
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}

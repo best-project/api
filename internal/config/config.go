@@ -1,5 +1,9 @@
 package config
 
+import (
+	"github.com/vrischmann/envconfig"
+)
+
 // Config provide helm broker configuration
 // Supported tags:
 //	- json: 		github.com/ghodss/yaml
@@ -11,14 +15,22 @@ package config
 type Config struct {
 	Port string
 
+	FbAppKey    string
+	FbAppSecret string
+
 	DbHost string
 	DbUser string
 	DbPass string
 	DbName string
+	DbPort string
 }
 
-func NewConfig() *Config {
-	return &Config{
-		Port: "8080",
+func NewConfig() (*Config, error) {
+	cfg := &Config{}
+
+	if err := envconfig.Init(cfg); err != nil {
+		return nil, err
 	}
+
+	return cfg, nil
 }

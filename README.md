@@ -1,4 +1,4 @@
-## API
+# Best API
 
 Web application backend service which provides a necessary data for best-project web site.
 
