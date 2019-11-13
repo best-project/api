@@ -94,6 +94,7 @@ func writeErrorResponse(w http.ResponseWriter, code int, err error) {
 		Message: err.Error(),
 		Code:    code,
 	}
+	fmt.Println(dto.Message)
 	writeResponseObject(w, code, dto)
 	return
 }

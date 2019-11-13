@@ -29,15 +29,15 @@ func (u *User) Exist(user *internal.User) bool {
 	return false
 }
 
-func (u *User) GetByName(username string) (*internal.User, error) {
+func (u *User) GetByName(username string) ([]*internal.User, error) {
 	u.db.RLock()
 	defer u.db.RUnlock()
-	users := make([]internal.User, 0)
+	users := make([]*internal.User, 0)
 
 	u.db.Where(&internal.User{Username: username}).Find(users)
-	if len(users) == 0 {
-		return nil, fmt.Errorf("not found user with name %s: ", username)
+	if len(users) > 1 {
+		return nil, fmt.Errorf("found more then one user with name %s: ", username)
 	}
 
-	return &users[0], nil
+	return users, nil
 }

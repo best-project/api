@@ -28,17 +28,36 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
 
-	user, err := srv.db.User.GetByName(name)
+	users, err := srv.db.User.GetByName(name)
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting user with name: %s", name))
 		return
 	}
+	if len(users) == 0 {
+		writeErrorResponse(w, http.StatusNotFound, errors.New("while creating token"))
+		return
+	}
 
-	writeResponseObject(w, http.StatusOK, user)
+	writeResponseObject(w, http.StatusOK, users[0])
 }
 
 func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
-	user := srv.getUserData(w, r)
+	userData := srv.getUserData(w, r)
+
+	users, err := srv.db.User.GetByName(userData.Username)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.New("while creating token"))
+		return
+	}
+	if len(users) == 0 {
+		writeErrorResponse(w, http.StatusNotFound, errors.New("while creating token"))
+		return
+	}
+	user := users[0]
+	if err := bcrypt.CompareHashAndPassword(user.Password, userData.Password); err != nil {
+		writeErrorResponse(w, http.StatusForbidden, errors.New("while comparing passwords"))
+		return
+	}
 
 	token, err := NewJWT(NewCustomPayload(user))
 	if err != nil {
@@ -86,7 +105,7 @@ func (srv *Server) createUserFb(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while getting user info"))
 		return
 	}
-	fmt.Println(feed)
+	fmt.Println("FB:", feed)
 
 	token, err := NewJWT(NewCustomPayload(user))
 	if err != nil {
