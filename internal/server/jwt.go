@@ -4,6 +4,7 @@ import (
 	"github.com/best-project/api/internal"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type CustomClaims struct {
@@ -11,20 +12,21 @@ type CustomClaims struct {
 	User *internal.User `json:"user,omitempty"`
 }
 
-var signingKey = []byte("Jechane")
+var signingKey = []byte("jwt")
 
 func NewCustomPayload(user *internal.User) *CustomClaims {
+	now := time.Now()
 	return &CustomClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: 60000,
-			Issuer:    "best.project.api",
+			ExpiresAt: now.Add(24 * time.Hour).Unix(),
+			IssuedAt:  now.Unix(),
 		},
 		User: user,
 	}
 }
 
 func NewJWT(claims *CustomClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tkn, err := token.SignedString(signingKey)
 	if err != nil {
 		return "", errors.Wrap(err, "while creating a token")

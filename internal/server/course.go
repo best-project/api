@@ -20,7 +20,10 @@ func (srv *Server) getCourseData(w http.ResponseWriter, r *http.Request) *intern
 }
 
 func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
-	srv.db.Course.SaveCourse(srv.getCourseData(w, r))
+	if err := srv.db.Course.SaveCourse(srv.getCourseData(w, r)); err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while saving course"))
+		return
+	}
 
 	srv.writeResponseCode(w, http.StatusCreated)
 }

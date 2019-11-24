@@ -34,11 +34,14 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(users) == 0 {
-		writeErrorResponse(w, http.StatusNotFound, errors.New("while creating token"))
+		writeErrorResponse(w, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 
-	writeResponseObject(w, http.StatusOK, users[0])
+	user := users[0]
+	user.Password = []byte{}
+
+	writeResponseObject(w, http.StatusOK, user)
 }
 
 func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
@@ -46,33 +49,39 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 
 	users, err := srv.db.User.GetByName(userData.Username)
 	if err != nil {
-		writeErrorResponse(w, http.StatusInternalServerError, errors.New("while creating token"))
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting by name %s", userData.Username))
 		return
 	}
 	if len(users) == 0 {
-		writeErrorResponse(w, http.StatusNotFound, errors.New("while creating token"))
+		writeErrorResponse(w, http.StatusNotFound, errors.New("user not found"))
 		return
 	}
 	user := users[0]
 	if err := bcrypt.CompareHashAndPassword(user.Password, userData.Password); err != nil {
-		writeErrorResponse(w, http.StatusForbidden, errors.New("while comparing passwords"))
+		writeErrorResponse(w, http.StatusForbidden, errors.Wrap(err, "while comparing passwords"))
 		return
 	}
 
 	token, err := NewJWT(NewCustomPayload(&user))
 	if err != nil {
-		writeErrorResponse(w, http.StatusInternalServerError, errors.New("while creating token"))
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while creating token"))
 		return
 	}
+	user.Token = token
+	if err := srv.db.User.UpdateUser(&user); err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while saving user"))
+		return
+	}
+	user.Password = []byte{}
 
-	srv.writeResponseBody(w, http.StatusOK, []byte(token))
+	writeResponseObject(w, http.StatusOK, user)
 }
 
 func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	user := srv.getUserData(w, r)
 
 	if srv.db.User.Exist(user) {
-		writeErrorResponse(w, http.StatusBadRequest, errors.New("[username, password] params required"))
+		writeErrorResponse(w, http.StatusBadRequest, errors.New("user already exists"))
 		return
 	}
 	var err error
@@ -81,8 +90,10 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while hashing password"))
 		return
 	}
-
-	srv.db.User.SaveUser(user)
+	if err := srv.db.User.SaveUser(internal.NewUser(user)); err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while saving user"))
+		return
+	}
 	srv.writeResponseCode(w, http.StatusCreated)
 }
 

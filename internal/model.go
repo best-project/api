@@ -1,27 +1,30 @@
 package internal
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+	"time"
+)
 
 type Course struct {
 	gorm.Model
 
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Image       string  `json:"image"`
-	Data        []Task  `json:"data"`
-	Language    string  `json:"language"`
-	Difficulty  string  `json:"difficulty"`
-	Rate        float32 `json:"rate"`
-	MaxPoints   int     `json:"maxPoints"`
+	Name        string
+	Description string
+	Image       string
+	Task        []Task
+	Language    string
+	Difficulty  string
+	Rate        float32
+	MaxPoints   int
 }
 
 type Task struct {
 	gorm.Model
 
-	Type      string `json:"type"`
-	Word      string `json:"word"`
-	Translate string `json:"translate"`
-	Image     string `json:"image"`
+	Type      string
+	Word      string
+	Translate string
+	Image     string
 }
 
 const (
@@ -29,15 +32,32 @@ const (
 	PuzzleType string = "puzzle"
 )
 
+func NewUser(user *User) *User {
+	now := time.Now()
+	return &User{
+		Username: user.Username,
+		Password: user.Password,
+		Model: gorm.Model{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		ProfileCourses: []Course{},
+		MyCourses:      []Course{},
+	}
+}
+
 type User struct {
 	gorm.Model
 
-	Username string `json:"username"`
-	Password []byte `json:"password,omitempty"`
-	Avatar   string `json:"avatar"`
+	Username string
+	Password []byte
+	Avatar   string
 
-	Level  int `json:"level"`
-	Points int `json:"points"`
+	Token string `sql:"size:2000"`
 
-	ProfileCourses []Course `json:"profileCourses"`
+	Level  int
+	Points int
+
+	ProfileCourses []Course
+	MyCourses      []Course
 }

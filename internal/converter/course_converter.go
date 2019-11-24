@@ -1,14 +1,20 @@
 package converter
 
-import "github.com/best-project/api/internal"
+import (
+	"github.com/best-project/api/internal"
+	"github.com/best-project/api/internal/storage"
+	"github.com/pkg/errors"
+)
 
 type CourseConverter struct {
 	TaskConverter *TaskConverter
+	db            *storage.Database
 }
 
-func NewCourseConverter(taskConverter *TaskConverter) *CourseConverter {
+func NewCourseConverter(db *storage.Database, taskConverter *TaskConverter) *CourseConverter {
 	return &CourseConverter{
 		TaskConverter: taskConverter,
+		db:            db,
 	}
 }
 
@@ -16,7 +22,6 @@ func (c *CourseConverter) ToModel(dto *internal.CourseDTO) *internal.Course {
 	return &internal.Course{
 		Name:        dto.Name,
 		Description: dto.Description,
-		Data:        c.TaskConverter.ManyToModel(dto.Data),
 		Difficulty:  dto.Difficulty,
 		Image:       dto.Image,
 		Language:    dto.Language,
@@ -35,8 +40,8 @@ func (c *CourseConverter) ManyToModel(dtos []internal.CourseDTO) []internal.Cour
 	return result
 }
 
-func (c *CourseConverter) ToDTO(dto internal.Course) internal.CourseDTO {
-	return internal.CourseDTO{
+func (c *CourseConverter) ToDTO(dto *internal.Course) (*internal.CourseDTO, error) {
+	return &internal.CourseDTO{
 		Name:        dto.Name,
 		Rate:        dto.Rate,
 		Image:       dto.Image,
@@ -44,16 +49,20 @@ func (c *CourseConverter) ToDTO(dto internal.Course) internal.CourseDTO {
 		MaxPoints:   dto.MaxPoints,
 		Difficulty:  dto.Difficulty,
 		Description: dto.Description,
-		Data:        c.TaskConverter.ManyToDTO(dto.Data),
-	}
+		Data:        c.TaskConverter.ManyToDTO(dto.Task),
+	}, nil
 }
 
-func (c *CourseConverter) ManyToDTO(dtos []internal.Course) []internal.CourseDTO {
-	result := make([]internal.CourseDTO, len(dtos))
+func (c *CourseConverter) ManyToDTO(courses []internal.Course) ([]internal.CourseDTO, error) {
+	result := make([]internal.CourseDTO, len(courses))
 
-	for _, dto := range dtos {
-		result = append(result, c.ToDTO(dto))
+	for _, course := range courses {
+		dto, err := c.ToDTO(&course)
+		if err != nil {
+			return nil, errors.Wrapf(err, "while converting course %d", course.ID)
+		}
+		result = append(result, *dto)
 	}
 
-	return result
+	return result, nil
 }

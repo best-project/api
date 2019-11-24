@@ -10,10 +10,8 @@ type Task struct {
 	db *gorm.DB
 }
 
-func (c *Task) SaveTask(task *internal.Task) {
-	c.db.Lock()
-	defer c.db.Unlock()
-	c.db.Save(task)
+func (c *Task) SaveTask(task *internal.Task) error {
+	return c.db.Save(task).Error
 }
 
 func (c *Task) GetByID(id uint) (*internal.Task, error) {
@@ -28,4 +26,14 @@ func (c *Task) GetByID(id uint) (*internal.Task, error) {
 	}
 
 	return &tasks[0], nil
+}
+
+func (c *Task) GetManyByID(ids []uint) ([]internal.Task, error) {
+	c.db.Lock()
+	defer c.db.Unlock()
+
+	tasks := make([]internal.Task, 0)
+	c.db.Where(ids).Find(&tasks)
+
+	return tasks, nil
 }
