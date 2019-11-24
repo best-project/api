@@ -9,7 +9,7 @@ build:
 
 .PHONY: run
 run:
-	docker run -p $(PORT):$(PORT) --env PORT=$(PORT) $(APP_NAME)
+	docker run -p $(PORT):$(PORT) --env PORT=$(PORT) --env-file=.env $(APP_NAME)
 
 .PHONY: start
 start: format build run

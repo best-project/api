@@ -59,7 +59,7 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := NewJWT(NewCustomPayload(user))
+	token, err := NewJWT(NewCustomPayload(&user))
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.New("while creating token"))
 		return

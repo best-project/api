@@ -13,6 +13,7 @@ import (
 type Database struct {
 	User   *User
 	Course *Course
+	Task   *Task
 }
 
 func NewDatabase(cfg *config.Config) (*Database, error) {
@@ -30,5 +31,5 @@ func NewDatabase(cfg *config.Config) (*Database, error) {
 	db.DropTableIfExists(tables...)
 	db.CreateTable(tables...)
 
-	return &Database{&User{db}, &Course{db}}, nil
+	return &Database{&User{db}, &Course{db}, &Task{db}}, nil
 }
