@@ -3,9 +3,7 @@ APP_NAME = api
 .PHONY: build
 build:
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api main.go
-	mv api deploy/
-	docker build -t $(APP_NAME) deploy/
-	rm deploy/api
+	docker build -t $(APP_NAME) .
 
 .PHONY: run
 run:
