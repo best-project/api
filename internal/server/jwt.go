@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
@@ -34,21 +35,28 @@ func NewJWT(claims *CustomClaims) (string, error) {
 	return tkn, nil
 }
 
-func ParseJWT(token string) (*jwt.Token, error) {
+func ParseJWT(token string) (*internal.User, error) {
 	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return signingKey, nil
 	})
-	if err != nil {
+	var user *internal.User
+
+	if claims, ok := parsed.Claims.(jwt.MapClaims); ok && parsed.Valid {
+		user = claims["user"].(*internal.User)
+	} else {
 		return nil, errors.Wrap(err, "while parsing a JWT token")
 	}
 
-	return parsed, nil
+	return user, nil
 }
 
 func IsValid(token string) bool {
-	tkn, err := ParseJWT(token)
+	_, err := ParseJWT(token)
 	if err != nil {
 		return false
 	}
-	return tkn.Valid
+	return true
 }

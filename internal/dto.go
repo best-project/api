@@ -1,7 +1,7 @@
 package internal
 
 type CourseDTO struct {
-	UserID      string    `json:"userId"`
+	UserID      uint      `json:"userId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Image       string    `json:"image"`
@@ -20,9 +20,14 @@ type TaskDTO struct {
 }
 
 type UserDTO struct {
+	Email    string `json:"email"`
 	Username string `json:"username"`
 	Password string `json:"password,omitempty"`
 	Avatar   string `json:"avatar"`
+
+	Token string `json:"token"`
+
+	ID int `json:"id"`
 
 	Level  int `json:"level"`
 	Points int `json:"points"`

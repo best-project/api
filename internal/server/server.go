@@ -31,11 +31,11 @@ const (
 	instagramEndpoint = "/register/instagram/callback"
 )
 
-func NewServer(db *storage.Database, fb facebook.Interface) *Server {
+func NewServer(db *storage.Database, fb facebook.Interface, logger *logrus.Logger) *Server {
 	host := "https://secret-cliffs-62699.herokuapp.com/"
 
 	return &Server{
-		logger: logrus.New(),
+		logger: logger,
 		fb:     fb,
 		db:     db,
 
@@ -67,6 +67,9 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCourse)))
 
+	rtr.Path("/courses/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCoursesByUserID)))
+	rtr.Path("/courses").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserCourses)))
+
 	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.statusHandler)))
 
 	return rtr
@@ -97,7 +100,7 @@ func writeErrorResponse(w http.ResponseWriter, code int, err error) {
 		Message: err.Error(),
 		Code:    code,
 	}
-	fmt.Println(dto.Message)
+	fmt.Println("ERROR:", dto.Message)
 	writeResponseObject(w, code, dto)
 	return
 }

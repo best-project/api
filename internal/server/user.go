@@ -7,21 +7,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"io"
 	"net/http"
 )
 
-func (srv *Server) getUserData(w http.ResponseWriter, r *http.Request) *internal.User {
+func (srv *Server) readUserData(body io.ReadCloser) (*internal.User, error) {
 	userDTO := &internal.UserDTO{}
-	err := json.NewDecoder(r.Body).Decode(&userDTO)
+	err := json.NewDecoder(body).Decode(&userDTO)
 	if err != nil {
-		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while decoding body"))
-		return nil
+		return nil, errors.Wrap(err, "while decoding user")
 	}
-	if len(userDTO.Username) == 0 || len(userDTO.Password) == 0 {
-		writeErrorResponse(w, http.StatusBadRequest, errors.New("[username, password] params required"))
-		return nil
-	}
-	return srv.converter.ToModel(userDTO)
+	return srv.converter.ToModel(userDTO), nil
 }
 
 func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
@@ -45,11 +41,16 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
-	userData := srv.getUserData(w, r)
-
-	users, err := srv.db.User.GetByName(userData.Username)
+	userData, err := srv.readUserData(r.Body)
 	if err != nil {
-		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting by name %s", userData.Username))
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while reading user %s data", userData.Email))
+		return
+	}
+
+	srv.logger.Infof("trying to login user %s", userData.Email)
+	users, err := srv.db.User.GetByMail(userData.Email)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting by mail %s", userData.Email))
 		return
 	}
 	if len(users) == 0 {
@@ -62,38 +63,48 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user.Token = ""
 	token, err := NewJWT(NewCustomPayload(&user))
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while creating token"))
 		return
 	}
 	user.Token = token
-	if err := srv.db.User.UpdateUser(&user); err != nil {
+	if err := srv.db.User.SaveUser(&user); err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while saving user"))
 		return
 	}
-	user.Password = []byte{}
+	result, err := srv.converter.ToDTO(user)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while converting to dto"))
+		return
+	}
 
-	writeResponseObject(w, http.StatusOK, user)
+	writeResponseObject(w, http.StatusOK, result)
 }
 
 func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
-	user := srv.getUserData(w, r)
+	user, err := srv.readUserData(r.Body)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while reading user %s data", user.Username))
+		return
+	}
 
 	if srv.db.User.Exist(user) {
 		writeErrorResponse(w, http.StatusBadRequest, errors.New("user already exists"))
 		return
 	}
-	var err error
 	user.Password, err = bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while hashing password"))
 		return
 	}
-	if err := srv.db.User.SaveUser(internal.NewUser(user)); err != nil {
+	if err := srv.db.User.SaveUser(user); err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while saving user"))
 		return
 	}
+
+	srv.logger.Infof("user %s was created", user.Email)
 	srv.writeResponseCode(w, http.StatusCreated)
 }
 

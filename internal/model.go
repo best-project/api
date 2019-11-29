@@ -2,12 +2,12 @@ package internal
 
 import (
 	"github.com/jinzhu/gorm"
-	"time"
 )
 
 type Course struct {
 	gorm.Model
 
+	UserID      uint
 	Name        string
 	Description string
 	Image       string
@@ -32,23 +32,10 @@ const (
 	PuzzleType string = "puzzle"
 )
 
-func NewUser(user *User) *User {
-	now := time.Now()
-	return &User{
-		Username: user.Username,
-		Password: user.Password,
-		Model: gorm.Model{
-			CreatedAt: now,
-			UpdatedAt: now,
-		},
-		ProfileCourses: []Course{},
-		MyCourses:      []Course{},
-	}
-}
-
 type User struct {
 	gorm.Model
 
+	Email    string
 	Username string
 	Password []byte
 	Avatar   string
@@ -57,7 +44,4 @@ type User struct {
 
 	Level  int
 	Points int
-
-	ProfileCourses []Course
-	MyCourses      []Course
 }

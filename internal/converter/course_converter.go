@@ -50,6 +50,7 @@ func (c *CourseConverter) ToDTO(dto *internal.Course) (*internal.CourseDTO, erro
 		Difficulty:  dto.Difficulty,
 		Description: dto.Description,
 		Data:        c.TaskConverter.ManyToDTO(dto.Task),
+		UserID:      dto.UserID,
 	}, nil
 }
 

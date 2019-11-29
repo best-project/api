@@ -14,14 +14,18 @@ func main() {
 	cfg, err := config.NewConfig()
 	fatalOnError(err)
 
+	logger := logrus.New()
+	logger.Info("Starting application")
+
 	fb := facebook.New()
 	fb.SetAppID(cfg.FbAppKey)
 	fb.SetAppSecret(cfg.FbAppSecret)
 
-	db, err := storage.NewDatabase(cfg)
+	db, err := storage.NewDatabase(cfg, logger)
 	fatalOnError(err)
 
-	srv := server.NewServer(db, fb)
+	srv := server.NewServer(db, fb, logger)
+	logger.Info("Starting Server")
 	fatalOnError(http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), srv.Handle()))
 }
 

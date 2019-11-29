@@ -4,7 +4,6 @@ import (
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/storage"
 	"github.com/jinzhu/gorm"
-	"github.com/pkg/errors"
 )
 
 type Converter struct {
@@ -31,24 +30,30 @@ func (c *Converter) FetchIDs(m []gorm.Model) []uint {
 func (c *Converter) ToModel(dto *internal.UserDTO) *internal.User {
 	return &internal.User{
 		Username: dto.Username,
-		Points:   dto.Points,
-		Avatar:   dto.Avatar,
-		Level:    dto.Level,
+		Email:    dto.Email,
+		Password: []byte(dto.Password),
+		//ProfileCourses: c.CourseConverter.ManyToModel(dto.ProfileCourses),
+		Points: dto.Points,
+		Avatar: dto.Avatar,
+		Level:  dto.Level,
 	}
 }
 
-func (u *Converter) ToDTO(dto *internal.User) (*internal.UserDTO, error) {
-	profileCoursesDTO, err := u.CourseConverter.ManyToDTO(dto.ProfileCourses)
-	if err != nil {
-		return nil, errors.Wrap(err, "while converting profile courses")
-	}
+func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
+	//profileCoursesDTO, err := u.CourseConverter.ManyToDTO(dto.ProfileCourses)
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "while converting profile courses")
+	//}
 
 	return &internal.UserDTO{
-		Username:       dto.Username,
-		Password:       string(dto.Password),
-		Level:          dto.Level,
-		Avatar:         dto.Avatar,
-		Points:         dto.Points,
-		ProfileCourses: profileCoursesDTO,
+		Username: dto.Username,
+		Password: "",
+		Level:    dto.Level,
+		Avatar:   dto.Avatar,
+		Points:   dto.Points,
+		Token:    dto.Token,
+		//ProfileCourses: profileCoursesDTO,
+		Email: dto.Email,
+		ID:    int(dto.ID),
 	}, nil
 }
