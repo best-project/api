@@ -44,7 +44,7 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		return nil, errors.Wrap(err, "while hashing pass")
 	}
 
-	userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, Username: "root", Email: "root", Password: pass})
+	userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, Username: "root", Email: "root", Password: string(pass)})
 	courseDB.SaveCourse(&internal.Course{Name: "XD", UserID: 1, Difficulty: "HARD"})
 	courseDB.SaveCourse(&internal.Course{Name: "2", UserID: 1, MaxPoints: 213, Description: "D"})
 	courseDB.SaveCourse(&internal.Course{Name: "3 XD", UserID: 1, Description: "a tu description"})

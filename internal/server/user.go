@@ -36,9 +36,14 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := users[0]
-	user.Password = []byte{}
 
-	writeResponseObject(w, http.StatusOK, user)
+	result, err := srv.converter.ToDTO(user)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while converting to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, result)
 }
 
 func (srv *Server) getUserByID(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +89,7 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user := users[0]
-	if err := bcrypt.CompareHashAndPassword(user.Password, userData.Password); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(userData.Password)); err != nil {
 		writeErrorResponse(w, http.StatusForbidden, errors.Wrap(err, "while comparing passwords"))
 		return
 	}
@@ -120,11 +125,13 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusBadRequest, errors.New("user already exists"))
 		return
 	}
-	user.Password, err = bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
+	pass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while hashing password"))
 		return
 	}
+
+	user.Password = string(pass)
 	if err := srv.db.User.SaveUser(user); err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while saving user"))
 		return

@@ -31,7 +31,7 @@ func (c *Converter) ToModel(dto *internal.UserDTO) *internal.User {
 	return &internal.User{
 		Username: dto.Username,
 		Email:    dto.Email,
-		Password: []byte(dto.Password),
+		Password: dto.Password,
 		//ProfileCourses: c.CourseConverter.ManyToModel(dto.ProfileCourses),
 		Points: dto.Points,
 		Avatar: dto.Avatar,

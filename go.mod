@@ -13,6 +13,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/madebyais/facebook-go-sdk v0.0.0-20171024011347-10fec9b83216
 	github.com/mcuadros/go-defaults v1.1.0
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/negroni v1.0.0

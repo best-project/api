@@ -37,7 +37,7 @@ type User struct {
 
 	Email    string
 	Username string
-	Password []byte
+	Password string
 	Avatar   string
 
 	Token string `sql:"size:2000"`

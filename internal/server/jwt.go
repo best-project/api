@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -42,21 +43,18 @@ func ParseJWT(token string) (*internal.User, error) {
 		}
 		return signingKey, nil
 	})
-	var user *internal.User
+	if err != nil {
+		return nil, errors.Wrap(err, "while parsing jwt")
+	}
+	var user internal.User
 
 	if claims, ok := parsed.Claims.(jwt.MapClaims); ok && parsed.Valid {
-		user = claims["user"].(*internal.User)
+		if err := mapstructure.Decode(claims["user"], &user); err != nil {
+			return nil, errors.Wrap(err, "while decoding user")
+		}
 	} else {
 		return nil, errors.Wrap(err, "while parsing a JWT token")
 	}
 
-	return user, nil
-}
-
-func IsValid(token string) bool {
-	_, err := ParseJWT(token)
-	if err != nil {
-		return false
-	}
-	return true
+	return &user, nil
 }

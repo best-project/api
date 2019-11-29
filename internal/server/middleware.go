@@ -12,8 +12,8 @@ type TokenCheckMiddleware struct{}
 // ServeHTTP handling asynchronous HTTP requests in Open Service Broker Api
 func (TokenCheckMiddleware) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	token := r.Header.Get("Authorization")
-	if token == "" || !IsValid(token) {
-		writeErrorResponse(rw, http.StatusBadRequest, errors.New("while verifying auth token"))
+	if _, err := ParseJWT(token); err != nil {
+		writeErrorResponse(rw, http.StatusForbidden, errors.Wrap(err, "while verifying auth token"))
 		return
 	}
 
