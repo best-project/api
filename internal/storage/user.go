@@ -39,6 +39,18 @@ func (u *User) GetByName(username string) ([]internal.User, error) {
 	return users, nil
 }
 
+func (u *User) GetByID(id uint) (*internal.User, error) {
+	u.db.RLock()
+	defer u.db.RUnlock()
+	user := &internal.User{}
+
+	if err := u.db.First(user, id).Error; err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (u *User) GetManyByID(ids []uint) ([]internal.User, error) {
 	u.db.Lock()
 	defer u.db.Unlock()

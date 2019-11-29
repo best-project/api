@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 func (srv *Server) readUserData(body io.ReadCloser) (*internal.User, error) {
@@ -38,6 +39,31 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	user.Password = []byte{}
 
 	writeResponseObject(w, http.StatusOK, user)
+}
+
+func (srv *Server) getUserByID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	parsedID, err := strconv.Atoi(id)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while parsing course ID: %s", id))
+		return
+	}
+
+	user, err := srv.db.User.GetByID(uint(parsedID))
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting user with id: %s", id))
+		return
+	}
+
+	result, err := srv.converter.ToDTO(*user)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while converting to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, result)
 }
 
 func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {

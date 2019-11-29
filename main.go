@@ -25,7 +25,7 @@ func main() {
 	fatalOnError(err)
 
 	srv := server.NewServer(db, fb, logger)
-	logger.Info("Starting Server")
+	logger.Info("===Starting Server===")
 	fatalOnError(http.ListenAndServe(fmt.Sprintf(":%s", cfg.Port), srv.Handle()))
 }
 
