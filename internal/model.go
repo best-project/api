@@ -18,6 +18,22 @@ type Course struct {
 	MaxPoints   int
 }
 
+type CourseResult struct {
+	gorm.Model
+
+	UserID   uint
+	CourseID uint
+
+	Points uint
+	Phase  string
+	Passed bool
+}
+
+const (
+	StartedPhase  string = "started"
+	FinishedPhase string = "finished"
+)
+
 type Task struct {
 	gorm.Model
 

@@ -12,6 +12,15 @@ type CourseDTO struct {
 	MaxPoints   int       `json:"maxPoints"`
 }
 
+type CourseResultDTO struct {
+	UserID   uint `json:"userId" validate:"required"`
+	CourseID uint `json:"courseId" validate:"required"`
+
+	Phase  string `json:"phase" validate:"required"`
+	Points uint   `json:"points"`
+	Passed bool   `json:"passed"`
+}
+
 type TaskDTO struct {
 	Type      string `json:"type"`
 	Word      string `json:"word"`
@@ -20,9 +29,9 @@ type TaskDTO struct {
 }
 
 type UserDTO struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password,omitempty"`
+	Email    string `json:"email" validate:"required,email"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password,omitempty" validate:"required"`
 	Avatar   string `json:"avatar"`
 
 	Token string `json:"token"`

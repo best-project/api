@@ -7,14 +7,16 @@ import (
 )
 
 type Converter struct {
-	CourseConverter *CourseConverter
-	db              *storage.Database
+	CourseConverter       *CourseConverter
+	CourseResultConverter *CourseResultConverter
+	db                    *storage.Database
 }
 
 func NewConverter(db *storage.Database) *Converter {
 	return &Converter{
-		db:              db,
-		CourseConverter: NewCourseConverter(db, &TaskConverter{}),
+		db:                    db,
+		CourseConverter:       NewCourseConverter(db, &TaskConverter{}),
+		CourseResultConverter: NewCourseResultConverter(db),
 	}
 }
 
@@ -56,4 +58,16 @@ func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
 		Email: dto.Email,
 		ID:    int(dto.ID),
 	}, nil
+}
+
+func unique(intSlice []int) []int {
+	keys := make(map[int]bool)
+	list := []int{}
+	for _, entry := range intSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

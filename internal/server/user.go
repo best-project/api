@@ -46,6 +46,28 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	writeResponseObject(w, http.StatusOK, result)
 }
 
+func (srv *Server) getUserByToken(w http.ResponseWriter, r *http.Request) {
+	token, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while parsing jwt token"))
+		return
+	}
+
+	user, err := srv.db.User.GetByID(token.ID)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting user with name: %s", token.Email))
+		return
+	}
+
+	result, err := srv.converter.ToDTO(*user)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while converting to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, result)
+}
+
 func (srv *Server) getUserByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -94,8 +116,7 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.Token = ""
-	token, err := NewJWT(NewCustomPayload(&user))
+	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}))
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrap(err, "while creating token"))
 		return
@@ -146,7 +167,6 @@ func (srv *Server) redirectToFb(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) createUserFb(w http.ResponseWriter, r *http.Request) {
-	user := &internal.User{}
 
 	data, err := srv.fb.GenerateAccessToken(srv.fbCallbackURL, r.URL.Query().Get("code"))
 	if err != nil {
@@ -162,7 +182,7 @@ func (srv *Server) createUserFb(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("FB:", feed)
 
-	token, err := NewJWT(NewCustomPayload(user))
+	token, err := NewJWT(NewCustomPayload(&UserClaim{}))
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.New("while creating token"))
 		return

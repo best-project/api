@@ -2,21 +2,25 @@ package server
 
 import (
 	"fmt"
-	"github.com/best-project/api/internal"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"time"
 )
 
+type UserClaim struct {
+	ID    uint
+	Email string
+}
+
 type CustomClaims struct {
 	jwt.StandardClaims
-	User *internal.User `json:"user,omitempty"`
+	User *UserClaim `json:"user"`
 }
 
 var signingKey = []byte("jwt")
 
-func NewCustomPayload(user *internal.User) *CustomClaims {
+func NewCustomPayload(user *UserClaim) *CustomClaims {
 	now := time.Now()
 	return &CustomClaims{
 		StandardClaims: jwt.StandardClaims{
@@ -36,7 +40,7 @@ func NewJWT(claims *CustomClaims) (string, error) {
 	return tkn, nil
 }
 
-func ParseJWT(token string) (*internal.User, error) {
+func ParseJWT(token string) (*UserClaim, error) {
 	parsed, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -46,7 +50,7 @@ func ParseJWT(token string) (*internal.User, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "while parsing jwt")
 	}
-	var user internal.User
+	var user UserClaim
 
 	if claims, ok := parsed.Claims.(jwt.MapClaims); ok && parsed.Valid {
 		if err := mapstructure.Decode(claims["user"], &user); err != nil {

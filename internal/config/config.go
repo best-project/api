@@ -23,6 +23,8 @@ type Config struct {
 	DbPass string
 	DbName string
 	DbPort string
+
+	PassPercent float32 `envconfig:"optional" default:"0.7"`
 }
 
 func NewConfig() (*Config, error) {

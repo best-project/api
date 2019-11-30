@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
@@ -40,7 +41,13 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseObject(w, http.StatusOK, courses)
+	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while converting courses to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, dto)
 }
 
 func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
@@ -49,13 +56,20 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while parsing jwt token"))
 		return
 	}
+	fmt.Println(user.ID)
 	courses, err := srv.db.Course.GetByUserID(user.ID)
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while saving course"))
 		return
 	}
 
-	writeResponseObject(w, http.StatusOK, courses)
+	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while converting courses to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, dto)
 }
 
 func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +93,13 @@ func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseObject(w, http.StatusOK, courses)
+	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while converting courses to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, dto)
 }
 
 func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
@@ -98,5 +118,11 @@ func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseObject(w, http.StatusOK, course)
+	dto, err := srv.converter.CourseConverter.ToDTO(course)
+	if err != nil {
+		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while converting courses to dto"))
+		return
+	}
+
+	writeResponseObject(w, http.StatusOK, dto)
 }

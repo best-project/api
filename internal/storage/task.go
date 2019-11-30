@@ -6,15 +6,15 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type Task struct {
+type TaskDB struct {
 	db *gorm.DB
 }
 
-func (c *Task) SaveTask(task *internal.Task) error {
+func (c *TaskDB) SaveTask(task *internal.Task) error {
 	return c.db.Save(task).Error
 }
 
-func (c *Task) GetByID(id uint) (*internal.Task, error) {
+func (c *TaskDB) GetByID(id uint) (*internal.Task, error) {
 	c.db.Lock()
 	defer c.db.Unlock()
 
@@ -28,7 +28,7 @@ func (c *Task) GetByID(id uint) (*internal.Task, error) {
 	return &tasks[0], nil
 }
 
-func (c *Task) GetManyByID(ids []uint) ([]internal.Task, error) {
+func (c *TaskDB) GetManyByID(ids []uint) ([]internal.Task, error) {
 	c.db.Lock()
 	defer c.db.Unlock()
 

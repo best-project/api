@@ -7,15 +7,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Course struct {
+type CourseDB struct {
 	db *gorm.DB
 }
 
-func (c *Course) SaveCourse(course *internal.Course) error {
+func (c *CourseDB) SaveCourse(course *internal.Course) error {
 	return c.db.Save(course).Error
 }
 
-func (c *Course) GetByUserID(id uint) ([]internal.Course, error) {
+func (c *CourseDB) GetByUserID(id uint) ([]internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 
@@ -28,7 +28,7 @@ func (c *Course) GetByUserID(id uint) ([]internal.Course, error) {
 	return courses, nil
 }
 
-func (c *Course) GetAll() ([]internal.Course, error) {
+func (c *CourseDB) GetAll() ([]internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 
@@ -41,7 +41,7 @@ func (c *Course) GetAll() ([]internal.Course, error) {
 	return courses, nil
 }
 
-func (c *Course) GetByID(id uint) (*internal.Course, error) {
+func (c *CourseDB) GetByID(id uint) (*internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 
@@ -55,7 +55,7 @@ func (c *Course) GetByID(id uint) (*internal.Course, error) {
 	return &courses[0], nil
 }
 
-func (c *Course) GetManyByID(ids []uint) ([]internal.Course, error) {
+func (c *CourseDB) GetManyByID(ids []int) ([]internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 

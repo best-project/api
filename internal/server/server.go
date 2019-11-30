@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/best-project/api/internal/converter"
+	"github.com/best-project/api/internal/service"
 	"github.com/best-project/api/internal/storage"
 	"github.com/gorilla/mux"
 	"github.com/madebyais/facebook-go-sdk"
@@ -18,6 +19,8 @@ type Server struct {
 	fb     facebook.Interface
 	db     *storage.Database
 
+	courseLogic *service.CourseLogic
+
 	host string
 
 	converter *converter.Converter
@@ -31,7 +34,7 @@ const (
 	instagramEndpoint = "/register/instagram/callback"
 )
 
-func NewServer(db *storage.Database, fb facebook.Interface, logger *logrus.Logger) *Server {
+func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service.CourseLogic, logger *logrus.Logger) *Server {
 	host := "https://secret-cliffs-62699.herokuapp.com/"
 
 	return &Server{
@@ -39,7 +42,8 @@ func NewServer(db *storage.Database, fb facebook.Interface, logger *logrus.Logge
 		fb:     fb,
 		db:     db,
 
-		converter: converter.NewConverter(db),
+		converter:   converter.NewConverter(db),
+		courseLogic: courseLogic,
 
 		host:                 host,
 		fbCallbackURL:        fmt.Sprintf("%s%s", host, fbEndpoint),
@@ -54,6 +58,8 @@ func (srv *Server) Handle() http.Handler {
 	tokenCheckMiddleware := TokenCheckMiddleware{}
 
 	rtr.Path("/login").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.loginUser)))
+
+	rtr.Path("/user").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUser)))
 	rtr.Path("/user/{name}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUser)))
 	rtr.Path("/user/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserByID)))
 	rtr.Path("/user/courses/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCoursesByUserID)))
@@ -65,6 +71,11 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCourse)))
 	rtr.Path("/courses").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserCourses)))
+
+	rtr.Path("/result/save").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.saveResult)))
+	rtr.Path("/results").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getAllCourses)))
+	rtr.Path("/results/started").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getStartedCourses)))
+	rtr.Path("/results/finished").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getFinishedCourses)))
 
 	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.statusHandler)))
 

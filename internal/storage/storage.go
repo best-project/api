@@ -13,9 +13,10 @@ import (
 )
 
 type Database struct {
-	User   *User
-	Course *Course
-	Task   *Task
+	User         *User
+	Task         *TaskDB
+	Course       *CourseDB
+	CourseResult *CourseResultDB
 }
 
 func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
@@ -29,15 +30,16 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 	}
 
 	// for development
-	tables := []interface{}{&internal.Course{}, &internal.User{}, &internal.Task{}}
+	tables := []interface{}{&internal.Course{}, &internal.User{}, &internal.Task{}, &internal.CourseResult{}}
 
 	entry.Info("Clearing database")
 	db.DropTableIfExists(tables...)
 	db.CreateTable(tables...)
 
 	userDB := &User{db}
-	courseDB := &Course{db}
-	taskDB := &Task{db}
+	taskDB := &TaskDB{db}
+	courseDB := &CourseDB{db}
+	courseResultsDB := &CourseResultDB{db}
 
 	pass, err := bcrypt.GenerateFromPassword([]byte("root123"), bcrypt.MinCost)
 	if err != nil {
@@ -49,5 +51,5 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 	courseDB.SaveCourse(&internal.Course{Name: "2", UserID: 1, MaxPoints: 213, Description: "D"})
 	courseDB.SaveCourse(&internal.Course{Name: "3 XD", UserID: 1, Description: "a tu description"})
 
-	return &Database{userDB, courseDB, taskDB}, nil
+	return &Database{userDB, taskDB, courseDB, courseResultsDB}, nil
 }
