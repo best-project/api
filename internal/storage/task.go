@@ -14,9 +14,19 @@ func (c *TaskDB) SaveTask(task *internal.Task) error {
 	return c.db.Save(task).Error
 }
 
+func (c *TaskDB) GetTasksForCourse(course *internal.Course) []internal.Task {
+	c.db.RLock()
+	defer c.db.RUnlock()
+
+	tasks := make([]internal.Task, 0)
+	c.db.Where(&internal.Task{CourseID: course.ID}).Find(&tasks)
+
+	return tasks
+}
+
 func (c *TaskDB) GetByID(id uint) (*internal.Task, error) {
-	c.db.Lock()
-	defer c.db.Unlock()
+	c.db.RLock()
+	defer c.db.RUnlock()
 
 	tasks := make([]internal.Task, 0)
 	c.db.Where(int64(id)).Find(&tasks)
@@ -29,8 +39,8 @@ func (c *TaskDB) GetByID(id uint) (*internal.Task, error) {
 }
 
 func (c *TaskDB) GetManyByID(ids []uint) ([]internal.Task, error) {
-	c.db.Lock()
-	defer c.db.Unlock()
+	c.db.RLock()
+	defer c.db.RUnlock()
 
 	tasks := make([]internal.Task, 0)
 	c.db.Where(ids).Find(&tasks)

@@ -1,15 +1,20 @@
 package internal
 
 type CourseDTO struct {
-	UserID      uint      `json:"userId"`
+	UserID uint `json:"userId"`
+
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Image       string    `json:"image"`
 	Data        []TaskDTO `json:"data"`
-	Language    string    `json:"language"`
-	Difficulty  string    `json:"difficulty"`
-	Rate        float32   `json:"rate"`
-	MaxPoints   int       `json:"maxPoints"`
+
+	InProgress      bool    `json:"inProgress"`
+	Language        string  `json:"language"`
+	DifficultyLevel string  `json:"difficultyLevel"`
+	Rate            float32 `json:"rate"`
+	MaxPoints       int     `json:"maxPoints"`
+
+	Type string `json:"type"`
 }
 
 type CourseResultDTO struct {
@@ -22,9 +27,8 @@ type CourseResultDTO struct {
 }
 
 type TaskDTO struct {
-	Type      string `json:"type"`
-	Word      string `json:"word"`
-	Translate string `json:"translate"`
+	Word      string `json:"word" validate:"required"`
+	Translate string `json:"translate" validate:"required"`
 	Image     string `json:"image"`
 }
 

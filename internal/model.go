@@ -7,15 +7,15 @@ import (
 type Course struct {
 	gorm.Model
 
-	UserID      uint
-	Name        string
-	Description string
-	Image       string
-	Task        []Task
-	Language    string
-	Difficulty  string
-	Rate        float32
-	MaxPoints   int
+	UserID          uint
+	Name            string
+	Description     string
+	Image           string
+	Task            []Task
+	Language        string
+	DifficultyLevel string
+	Rate            float32
+	MaxPoints       int
 }
 
 type CourseResult struct {
@@ -37,7 +37,7 @@ const (
 type Task struct {
 	gorm.Model
 
-	Type      string
+	CourseID  uint
 	Word      string
 	Translate string
 	Image     string

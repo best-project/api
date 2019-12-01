@@ -23,6 +23,8 @@ type Server struct {
 
 	host string
 
+	xpForTask int
+
 	converter *converter.Converter
 
 	fbCallbackURL        string
@@ -44,6 +46,8 @@ func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service
 
 		converter:   converter.NewConverter(db),
 		courseLogic: courseLogic,
+
+		xpForTask: 10,
 
 		host:                 host,
 		fbCallbackURL:        fmt.Sprintf("%s%s", host, fbEndpoint),

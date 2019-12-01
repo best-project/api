@@ -12,6 +12,13 @@ type CourseDB struct {
 }
 
 func (c *CourseDB) SaveCourse(course *internal.Course) error {
+	for _, task := range course.Task {
+		task.CourseID = 1
+		c.db.Save(&task)
+	}
+	if err := c.db.Create(course).Error; err != nil {
+		return err
+	}
 	return c.db.Save(course).Error
 }
 

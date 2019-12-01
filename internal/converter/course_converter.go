@@ -20,13 +20,13 @@ func NewCourseConverter(db *storage.Database, taskConverter *TaskConverter) *Cou
 
 func (c *CourseConverter) ToModel(dto *internal.CourseDTO) *internal.Course {
 	return &internal.Course{
-		Name:        dto.Name,
-		Description: dto.Description,
-		Difficulty:  dto.Difficulty,
-		Image:       dto.Image,
-		Language:    dto.Language,
-		MaxPoints:   dto.MaxPoints,
-		Rate:        dto.Rate,
+		Name:            dto.Name,
+		Description:     dto.Description,
+		DifficultyLevel: dto.DifficultyLevel,
+		Image:           dto.Image,
+		Language:        dto.Language,
+		MaxPoints:       dto.MaxPoints,
+		Rate:            dto.Rate,
 	}
 }
 
@@ -42,15 +42,15 @@ func (c *CourseConverter) ManyToModel(dtos []internal.CourseDTO) []internal.Cour
 
 func (c *CourseConverter) ToDTO(dto *internal.Course) (*internal.CourseDTO, error) {
 	return &internal.CourseDTO{
-		Name:        dto.Name,
-		Rate:        dto.Rate,
-		Image:       dto.Image,
-		Language:    dto.Language,
-		MaxPoints:   dto.MaxPoints,
-		Difficulty:  dto.Difficulty,
-		Description: dto.Description,
-		Data:        c.TaskConverter.ManyToDTO(dto.Task),
-		UserID:      dto.UserID,
+		Name:            dto.Name,
+		Rate:            dto.Rate,
+		Image:           dto.Image,
+		Language:        dto.Language,
+		MaxPoints:       dto.MaxPoints,
+		DifficultyLevel: dto.DifficultyLevel,
+		Description:     dto.Description,
+		Data:            c.TaskConverter.ManyToDTO(dto.Task),
+		UserID:          dto.UserID,
 	}, nil
 }
 

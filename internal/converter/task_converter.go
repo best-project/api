@@ -7,7 +7,6 @@ type TaskConverter struct{}
 func (*TaskConverter) ConvertToModel(dto internal.TaskDTO) internal.Task {
 	return internal.Task{
 		Image:     dto.Image,
-		Type:      dto.Type,
 		Translate: dto.Translate,
 		Word:      dto.Word,
 	}
@@ -26,7 +25,6 @@ func (t *TaskConverter) ManyToModel(dto []internal.TaskDTO) []internal.Task {
 func (*TaskConverter) ConvertToDTO(dto internal.Task) internal.TaskDTO {
 	return internal.TaskDTO{
 		Image:     dto.Image,
-		Type:      dto.Type,
 		Translate: dto.Translate,
 		Word:      dto.Word,
 	}

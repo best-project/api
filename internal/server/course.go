@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/best-project/api/internal"
+	"github.com/choria-io/go-validator/enum"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"io"
@@ -11,12 +11,18 @@ import (
 	"strconv"
 )
 
+var courseTypes = []string{internal.ImageType, internal.PuzzleType}
+
 func (srv *Server) getCourseData(body io.ReadCloser) (*internal.Course, error) {
 	courseDTO := &internal.CourseDTO{}
 	err := json.NewDecoder(body).Decode(&courseDTO)
 	if err != nil {
 		return nil, errors.Wrapf(err, "while decoding body")
 	}
+	if _, err := enum.ValidateString(courseDTO.Type, courseTypes); err != nil {
+		return nil, errors.Wrapf(err, "invalid course type %s", courseDTO.Type)
+	}
+
 	return srv.converter.CourseConverter.ToModel(courseDTO), nil
 }
 
@@ -26,6 +32,9 @@ func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while decoding json body"))
 		return
 	}
+
+	course.MaxPoints = len(course.Task) * srv.xpForTask
+
 	if err := srv.db.Course.SaveCourse(course); err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while saving course"))
 		return
@@ -56,7 +65,6 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while parsing jwt token"))
 		return
 	}
-	fmt.Println(user.ID)
 	courses, err := srv.db.Course.GetByUserID(user.ID)
 	if err != nil {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while saving course"))
@@ -117,6 +125,8 @@ func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, http.StatusInternalServerError, errors.Wrapf(err, "while getting from storage course ID: %s", id))
 		return
 	}
+	tasks := srv.db.Task.GetTasksForCourse(course)
+	course.Task = tasks
 
 	dto, err := srv.converter.CourseConverter.ToDTO(course)
 	if err != nil {
