@@ -60,10 +60,10 @@ func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
 	}, nil
 }
 
-func unique(intSlice []int) []int {
-	keys := make(map[int]bool)
-	list := []int{}
-	for _, entry := range intSlice {
+func unique(strings []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range strings {
 		if _, value := keys[entry]; !value {
 			keys[entry] = true
 			list = append(list, entry)

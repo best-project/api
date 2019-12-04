@@ -29,24 +29,22 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		return nil, errors.Wrap(err, "unable to connect to database")
 	}
 
-	// for development
-	tables := []interface{}{&internal.Course{}, &internal.User{}, &internal.Task{}, &internal.CourseResult{}}
-
 	entry.Info("Clearing database")
-	db.DropTableIfExists(tables...)
-	db.CreateTable(tables...)
 
 	userDB := &User{db}
 	taskDB := &TaskDB{db}
 	courseDB := &CourseDB{db}
 	courseResultsDB := &CourseResultDB{db}
 
-	pass, err := bcrypt.GenerateFromPassword([]byte("root123"), bcrypt.MinCost)
+	// for development
+	tables := []interface{}{&internal.Course{}, &internal.User{}, &internal.Task{}, &internal.CourseResult{}}
+	db.DropTableIfExists(tables...)
+	db.CreateTable(tables...)
+	pass, err := bcrypt.GenerateFromPassword([]byte("root1234"), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, errors.Wrap(err, "while hashing pass")
 	}
-
-	userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, Username: "JanNowak23141", Email: "root", Password: string(pass), Level: 1, Points: 0, Avatar: "https://www.pngtube.com/myfile/detail/479-4792237_gopher-dragon-clipart-go-gopher-logos.png"})
+	userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, Username: "JanNowak23141", Email: "root@o2.pl", Password: string(pass), Level: 1, Points: 0, Avatar: "https://www.pngtube.com/myfile/detail/479-4792237_gopher-dragon-clipart-go-gopher-logos.png"})
 	tasks := []internal.Task{
 		{
 			Word:      "aisle",
@@ -98,6 +96,18 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		Image:       "https://culture360.asef.org/media/2018/5/european_commission_shutterstock_584963080.jpg",
 		Task:        tasks})
 	courseDB.SaveCourse(&internal.Course{Name: "Religia", UserID: 1, DifficultyLevel: "normal", MaxPoints: 80, Language: "en", Rate: 4.0,
+		Description: "Słowo Religia ma wiele znaczeń. Interpretuje się ją w różny sposób przez przedstawicieli wielu dziedzin. Kulturę można określić jako ogół wytworów ludzi, zarówno fizycznych, materialnych, jak i duchowych, symbolicznych.",
+		Image:       "https://culture360.asef.org/media/2018/5/european_commission_shutterstock_584963080.jpg",
+		Task:        tasks})
+	courseDB.SaveCourse(&internal.Course{Name: "Kultura2", UserID: 1, DifficultyLevel: "normal", MaxPoints: 80, Language: "en", Rate: 4.0,
+		Description: "Słowo kultura ma wiele znaczeń. Interpretuje się ją w różny sposób przez przedstawicieli wielu dziedzin. Kulturę można określić jako ogół wytworów ludzi, zarówno fizycznych, materialnych, jak i duchowych, symbolicznych.",
+		Image:       "https://culture360.asef.org/media/2018/5/european_commission_shutterstock_584963080.jpg",
+		Task:        tasks})
+	courseDB.SaveCourse(&internal.Course{Name: "Nauka2", UserID: 1, DifficultyLevel: "normal", MaxPoints: 80, Language: "en", Rate: 4.0,
+		Description: "Słowo Nauka ma wiele znaczeń. Interpretuje się ją w różny sposób przez przedstawicieli wielu dziedzin. Kulturę można określić jako ogół wytworów ludzi, zarówno fizycznych, materialnych, jak i duchowych, symbolicznych.",
+		Image:       "https://culture360.asef.org/media/2018/5/european_commission_shutterstock_584963080.jpg",
+		Task:        tasks})
+	courseDB.SaveCourse(&internal.Course{Name: "Religia2", UserID: 1, DifficultyLevel: "normal", MaxPoints: 80, Language: "en", Rate: 4.0,
 		Description: "Słowo Religia ma wiele znaczeń. Interpretuje się ją w różny sposób przez przedstawicieli wielu dziedzin. Kulturę można określić jako ogół wytworów ludzi, zarówno fizycznych, materialnych, jak i duchowych, symbolicznych.",
 		Image:       "https://culture360.asef.org/media/2018/5/european_commission_shutterstock_584963080.jpg",
 		Task:        tasks})

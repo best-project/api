@@ -1,14 +1,14 @@
 package internal
 
 type CourseDTO struct {
-	UserID uint `json:"userId"`
+	CourseID string `json:"id"`
+	UserID   uint   `json:"userId"`
 
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Image       string    `json:"image"`
 	Data        []TaskDTO `json:"data"`
 
-	InProgress      bool    `json:"inProgress"`
 	Language        string  `json:"language"`
 	DifficultyLevel string  `json:"difficultyLevel"`
 	Rate            float32 `json:"rate"`
@@ -18,8 +18,8 @@ type CourseDTO struct {
 }
 
 type CourseResultDTO struct {
-	UserID   uint `json:"userId" validate:"required"`
-	CourseID uint `json:"courseId" validate:"required"`
+	UserID   uint   `json:"userId" validate:"required"`
+	CourseID string `json:"courseId" validate:"required"`
 
 	Phase  string `json:"phase" validate:"required"`
 	Points uint   `json:"points"`
@@ -33,9 +33,9 @@ type TaskDTO struct {
 }
 
 type UserDTO struct {
-	Email    string `json:"email" validate:"required,email"`
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password,omitempty" validate:"required"`
+	Email    string `json:"email" validate:"required,email,max=250"`
+	Username string `json:"username" validate:"required,max=250"`
+	Password string `json:"password,omitempty" validate:"required,min=8,max=250"`
 	Avatar   string `json:"avatar"`
 
 	Token string `json:"token"`
@@ -44,6 +44,4 @@ type UserDTO struct {
 
 	Level  int `json:"level"`
 	Points int `json:"points"`
-
-	ProfileCourses []CourseDTO `json:"profileCourses"`
 }

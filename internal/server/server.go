@@ -6,6 +6,7 @@ import (
 	"github.com/best-project/api/internal/converter"
 	"github.com/best-project/api/internal/service"
 	"github.com/best-project/api/internal/storage"
+	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"github.com/madebyais/facebook-go-sdk"
 	"github.com/sirupsen/logrus"
@@ -20,6 +21,7 @@ type Server struct {
 	db     *storage.Database
 
 	courseLogic *service.CourseLogic
+	validator   *validator.Validate
 
 	host string
 
@@ -46,6 +48,7 @@ func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service
 
 		converter:   converter.NewConverter(db),
 		courseLogic: courseLogic,
+		validator:   validator.New(),
 
 		xpForTask: 10,
 
@@ -69,8 +72,8 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/user/courses/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCoursesByUserID)))
 
 	rtr.Path("/register/user").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.createUser)))
-	rtr.Path("/register/fb").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToFb)))
-	rtr.Path("/register/instagram").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToInstagram)))
+	//rtr.Path("/register/fb").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToFb)))
+	//rtr.Path("/register/instagram").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToInstagram)))
 
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCourse)))
@@ -87,20 +90,9 @@ func (srv *Server) Handle() http.Handler {
 }
 
 func (srv *Server) statusHandler(w http.ResponseWriter, r *http.Request) {
-	srv.writeResponseCode(w, http.StatusOK)
-	return
-}
-
-func (srv *Server) writeResponseCode(w http.ResponseWriter, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write([]byte(strconv.Itoa(code)))
-}
-
-func (srv *Server) writeResponseBody(w http.ResponseWriter, code int, body []byte) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(body)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(strconv.Itoa(http.StatusOK)))
 }
 
 func writeErrorResponse(w http.ResponseWriter, code int, err error) {
@@ -112,11 +104,23 @@ func writeErrorResponse(w http.ResponseWriter, code int, err error) {
 		Code:    code,
 	}
 	fmt.Println("ERROR:", dto.Message)
-	writeResponseObject(w, code, dto)
+	writeResponseJson(w, code, dto)
 	return
 }
 
-func writeResponseObject(w http.ResponseWriter, code int, object interface{}) {
+func writeMessageResponse(w http.ResponseWriter, code int, msg string) {
+	dto := struct {
+		Message string
+		Code    int
+	}{
+		Message: msg,
+		Code:    code,
+	}
+	writeResponseJson(w, code, dto)
+	return
+}
+
+func writeResponseJson(w http.ResponseWriter, code int, object interface{}) {
 	data, err := json.Marshal(object)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

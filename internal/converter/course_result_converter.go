@@ -22,13 +22,14 @@ func (c *CourseResultConverter) ToModel(dto *internal.CourseResultDTO) *internal
 		CourseID: dto.CourseID,
 		UserID:   dto.UserID,
 		Phase:    dto.Phase,
+		Passed:   dto.Passed,
 	}
 }
 
-func (c *CourseResultConverter) FetchIDs(m []internal.CourseResult) []int {
-	result := make([]int, 0)
+func (c *CourseResultConverter) FetchIDs(m []internal.CourseResult) []string {
+	result := make([]string, 0)
 	for _, item := range m {
-		result = append(result, int(item.ID))
+		result = append(result, item.CourseID)
 	}
 
 	return unique(result)

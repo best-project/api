@@ -27,6 +27,9 @@ func (c *CourseConverter) ToModel(dto *internal.CourseDTO) *internal.Course {
 		Language:        dto.Language,
 		MaxPoints:       dto.MaxPoints,
 		Rate:            dto.Rate,
+		Type:            dto.Type,
+		UserID:          dto.UserID,
+		Task:            c.TaskConverter.ManyToModel(dto.Data),
 	}
 }
 
@@ -42,6 +45,8 @@ func (c *CourseConverter) ManyToModel(dtos []internal.CourseDTO) []internal.Cour
 
 func (c *CourseConverter) ToDTO(dto *internal.Course) (*internal.CourseDTO, error) {
 	return &internal.CourseDTO{
+		CourseID:        dto.CourseID,
+		Type:            dto.Type,
 		Name:            dto.Name,
 		Rate:            dto.Rate,
 		Image:           dto.Image,
@@ -54,11 +59,14 @@ func (c *CourseConverter) ToDTO(dto *internal.Course) (*internal.CourseDTO, erro
 	}, nil
 }
 
-func (c *CourseConverter) ManyToDTO(courses []internal.Course) ([]internal.CourseDTO, error) {
-	result := make([]internal.CourseDTO, len(courses))
+func (c *CourseConverter) ManyToDTO(courses []*internal.Course) ([]internal.CourseDTO, error) {
+	result := make([]internal.CourseDTO, 0)
 
 	for _, course := range courses {
-		dto, err := c.ToDTO(&course)
+		if course.UserID == 0 {
+			continue
+		}
+		dto, err := c.ToDTO(course)
 		if err != nil {
 			return nil, errors.Wrapf(err, "while converting course %d", course.ID)
 		}

@@ -19,7 +19,7 @@ func (c *TaskDB) GetTasksForCourse(course *internal.Course) []internal.Task {
 	defer c.db.RUnlock()
 
 	tasks := make([]internal.Task, 0)
-	c.db.Where(&internal.Task{CourseID: course.ID}).Find(&tasks)
+	c.db.Where(&internal.Task{CourseID: course.CourseID}).Find(&tasks)
 
 	return tasks
 }

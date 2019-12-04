@@ -31,9 +31,12 @@ func (*TaskConverter) ConvertToDTO(dto internal.Task) internal.TaskDTO {
 }
 
 func (t *TaskConverter) ManyToDTO(dto []internal.Task) []internal.TaskDTO {
-	model := make([]internal.TaskDTO, len(dto))
+	model := make([]internal.TaskDTO, 0)
 
 	for _, d := range dto {
+		if d.Word == "" {
+			continue
+		}
 		model = append(model, t.ConvertToDTO(d))
 	}
 
