@@ -78,12 +78,11 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCourse)))
 	rtr.Path("/courses").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserCourses)))
+	rtr.Path("/courses/all").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getAllCourses)))
+	rtr.Path("/courses/started").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getStartedCourses)))
+	rtr.Path("/courses/finished").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getFinishedCourses)))
 
 	rtr.Path("/result/save").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.saveResult)))
-	rtr.Path("/results").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getAllCourses)))
-	rtr.Path("/results/started").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getStartedCourses)))
-	rtr.Path("/results/finished").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getFinishedCourses)))
-
 	rtr.Path("/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.fetchByXP)))
 
 	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.statusHandler)))
