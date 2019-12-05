@@ -11,7 +11,7 @@ type Course struct {
 	UserID          uint
 	Name            string
 	Description     string
-	Image           string
+	Image           string `sql:"size:2000"`
 	Task            []Task
 	Language        string
 	DifficultyLevel string

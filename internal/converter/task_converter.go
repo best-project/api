@@ -1,6 +1,9 @@
 package converter
 
-import "github.com/best-project/api/internal"
+import (
+	"github.com/best-project/api/internal"
+	"strconv"
+)
 
 type TaskConverter struct{}
 
@@ -24,6 +27,7 @@ func (t *TaskConverter) ManyToModel(dto []internal.TaskDTO) []internal.Task {
 
 func (*TaskConverter) ConvertToDTO(dto internal.Task) internal.TaskDTO {
 	return internal.TaskDTO{
+		ID:        strconv.Itoa(int(dto.ID)),
 		Image:     dto.Image,
 		Translate: dto.Translate,
 		Word:      dto.Word,

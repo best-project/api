@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	//"github.com/olahol/go-imageupload"
+	"github.com/olahol/go-imageupload"
 	"io"
 	"net/http"
 	"strconv"
@@ -41,14 +42,21 @@ func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.Course, e))
 		return
 	}
-	//img, err := imageupload.Process(r, "img")
-	//if err != nil {
-	//	e := err.(validator.ValidationErrors)
-	//	writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.Course, e))
-	//	return
-	//}
+	img, err := imageupload.Process(r, "image")
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while fetching image"))
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
+		return
+	}
+	img, err = img.ThumbnailJPEG(300, 300, 1)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while converting image"))
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
+		return
+	}
 
 	course.MaxPoints = len(course.Data) * srv.xpForTask
+	course.Image = img.DataURI()
 
 	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course)); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))

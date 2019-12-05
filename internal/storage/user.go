@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
 type User struct {
@@ -69,6 +70,18 @@ func (u *User) GetByMail(email string) ([]internal.User, error) {
 	u.db.Where(&internal.User{Email: email}).Find(&users)
 	if len(users) > 1 {
 		return nil, fmt.Errorf("found more then one user with mail %s: ", email)
+	}
+
+	return users, nil
+}
+
+func (u *User) GetAll() ([]internal.User, error) {
+	u.db.RLock()
+	defer u.db.RUnlock()
+	users := make([]internal.User, 0)
+
+	if err := u.db.Find(&users).Error; err != nil {
+		return nil, errors.Wrapf(err, "while getting courses")
 	}
 
 	return users, nil

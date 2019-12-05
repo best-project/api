@@ -29,6 +29,24 @@ func (c *Converter) FetchIDs(m []gorm.Model) []uint {
 	return result
 }
 
+func (c *Converter) ToUserStat(dto internal.User) *internal.UserStatDTO {
+	return &internal.UserStatDTO{
+		Points:   dto.Points,
+		UserID:   dto.ID,
+		Level:    dto.Level,
+		Username: dto.Username,
+	}
+}
+
+func (c *Converter) ManyToUserStat(dtos []internal.User) []*internal.UserStatDTO {
+	results := make([]*internal.UserStatDTO, 0)
+
+	for _, dto := range dtos {
+		results = append(results, c.ToUserStat(dto))
+	}
+	return results
+}
+
 func (c *Converter) ToModel(dto *internal.UserDTO) *internal.User {
 	return &internal.User{
 		Username: dto.Username,

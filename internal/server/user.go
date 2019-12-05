@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
@@ -39,9 +40,7 @@ func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := users[0]
-
-	result, err := srv.converter.ToDTO(user)
+	result, err := srv.converter.ToDTO(users[0])
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while converting to dto"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.User))
@@ -180,7 +179,7 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.MinCost)
+	pass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while hashing password"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -197,6 +196,20 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 	srv.logger.Infof("user %s was created", user.Email)
 	writeMessageResponse(w, http.StatusCreated, pretty.NewCreateMessage(pretty.User))
+}
+
+func (srv *Server) fetchByXP(w http.ResponseWriter, r *http.Request) {
+	users, err := srv.db.User.GetAll()
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while listing users"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Users))
+		return
+	}
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Points < users[j].Points
+	})
+
+	writeResponseJson(w, http.StatusOK, srv.converter.ManyToUserStat(users))
 }
 
 //func (srv *Server) redirectToFb(w http.ResponseWriter, r *http.Request) {
