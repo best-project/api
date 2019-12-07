@@ -70,14 +70,13 @@ func (srv *Server) Handle() http.Handler {
 	//rtr.Path("/register/instagram").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToInstagram)))
 
 	rtr.Path("/user").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserByToken)))
-	rtr.Path("/user/{name}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUser)))
 	rtr.Path("/user/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserByID)))
 	rtr.Path("/user/courses/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCoursesByUserID)))
 
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
-	rtr.Path("/course/update").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.updateCourse)))
+	rtr.Path("/course/update").Methods(http.MethodPut).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.updateCourse)))
 	rtr.Path("/course/task/add").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.addTasksToCourse)))
-	rtr.Path("/course/task/remove").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.removeTasksFromCourse)))
+	rtr.Path("/course/task/remove").Methods(http.MethodDelete).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.removeTasksFromCourse)))
 
 	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCourse)))
 	rtr.Path("/courses").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserCourses)))

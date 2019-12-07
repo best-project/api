@@ -44,7 +44,7 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "while hashing pass")
 		}
-		userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, Username: "JanNowak23141", Email: "root@o2.pl", Password: string(pass), Level: 1, Points: 0, Avatar: "https://www.pngtube.com/myfile/detail/479-4792237_gopher-dragon-clipart-go-gopher-logos.png"})
+		userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, FirstName: "Jan", LastName:"Nowak", Email: "root@o2.pl", Password: string(pass), Level: 1, Points: 0, Avatar: "https://www.pngtube.com/myfile/detail/479-4792237_gopher-dragon-clipart-go-gopher-logos.png"})
 		tasks := []internal.Task{
 			{
 				Word:      "aisle",

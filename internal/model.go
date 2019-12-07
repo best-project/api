@@ -53,10 +53,11 @@ type Task struct {
 type User struct {
 	gorm.Model
 
-	Email    string
-	Username string
-	Password string
-	Avatar   string
+	Email     string
+	FirstName string
+	LastName  string
+	Password  string
+	Avatar    string
 
 	Token string `sql:"size:2000"`
 

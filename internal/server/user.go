@@ -24,32 +24,6 @@ func (srv *Server) readUserData(body io.ReadCloser) (*internal.UserDTO, error) {
 	return userDTO, nil
 }
 
-func (srv *Server) getUser(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	name := vars["name"]
-
-	users, err := srv.db.User.GetByName(name)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while getting user with name: %s", name))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.User))
-		return
-	}
-	if len(users) == 0 {
-		srv.logger.Errorln(errors.New("user not found " + name))
-		writeMessageResponse(w, http.StatusNotFound, pretty.NewNotFoundError(pretty.User))
-		return
-	}
-
-	result, err := srv.converter.ToDTO(users[0])
-	if err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while converting to dto"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.User))
-		return
-	}
-
-	writeResponseJson(w, http.StatusOK, result)
-}
-
 func (srv *Server) getUserByToken(w http.ResponseWriter, r *http.Request) {
 	token, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {

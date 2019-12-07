@@ -27,19 +27,6 @@ func (u *User) Exist(user *internal.User) bool {
 	return false
 }
 
-func (u *User) GetByName(username string) ([]internal.User, error) {
-	u.db.RLock()
-	defer u.db.RUnlock()
-	users := make([]internal.User, 0)
-
-	u.db.Where(&internal.User{Username: username}).Find(&users)
-	if len(users) > 1 {
-		return nil, fmt.Errorf("found more then one user with name %s: ", username)
-	}
-
-	return users, nil
-}
-
 func (u *User) GetByID(id uint) (*internal.User, error) {
 	u.db.RLock()
 	defer u.db.RUnlock()

@@ -35,10 +35,11 @@ type TaskDTO struct {
 }
 
 type UserDTO struct {
-	Email    string `json:"email" validate:"required,email,max=250"`
-	Username string `json:"username" validate:"required,max=250"`
-	Password string `json:"password,omitempty" validate:"required,min=8,max=250"`
-	Avatar   string `json:"avatar"`
+	Email     string `json:"email" validate:"required,email,max=250"`
+	FirstName string `json:"firstName" validate:"max=250"`
+	LastName  string `json:"lastName" validate:"max=250"`
+	Password  string `json:"password,omitempty" validate:"required,min=8,max=250"`
+	Avatar    string `json:"avatar"`
 
 	Token string `json:"token"`
 
@@ -49,8 +50,8 @@ type UserDTO struct {
 }
 
 type UserStatDTO struct {
-	UserID   uint   `json:"user_id"`
-	Username string `json:"username"`
-	Points   int    `json:"points"`
-	Level    int    `json:"level"`
+	UserID uint   `json:"user_id"`
+	Email  string `json:"username"`
+	Points int    `json:"points"`
+	Level  int    `json:"level"`
 }

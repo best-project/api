@@ -31,10 +31,10 @@ func (c *Converter) FetchIDs(m []gorm.Model) []uint {
 
 func (c *Converter) ToUserStat(dto internal.User) *internal.UserStatDTO {
 	return &internal.UserStatDTO{
-		Points:   dto.Points,
-		UserID:   dto.ID,
-		Level:    dto.Level,
-		Username: dto.Username,
+		Points: dto.Points,
+		UserID: dto.ID,
+		Level:  dto.Level,
+		Email:  dto.Email,
 	}
 }
 
@@ -49,9 +49,10 @@ func (c *Converter) ManyToUserStat(dtos []internal.User) []*internal.UserStatDTO
 
 func (c *Converter) ToModel(dto *internal.UserDTO) *internal.User {
 	return &internal.User{
-		Username: dto.Username,
-		Email:    dto.Email,
-		Password: dto.Password,
+		FirstName: dto.FirstName,
+		LastName:  dto.LastName,
+		Email:     dto.Email,
+		Password:  dto.Password,
 		//ProfileCourses: c.CourseConverter.ManyToModel(dto.ProfileCourses),
 		Points: dto.Points,
 		Avatar: dto.Avatar,
@@ -66,12 +67,13 @@ func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
 	//}
 
 	return &internal.UserDTO{
-		Username: dto.Username,
-		Password: "",
-		Level:    dto.Level,
-		Avatar:   dto.Avatar,
-		Points:   dto.Points,
-		Token:    dto.Token,
+		FirstName: dto.FirstName,
+		LastName:  dto.LastName,
+		Password:  "",
+		Level:     dto.Level,
+		Avatar:    dto.Avatar,
+		Points:    dto.Points,
+		Token:     dto.Token,
 		//ProfileCourses: profileCoursesDTO,
 		Email: dto.Email,
 		ID:    int(dto.ID),
