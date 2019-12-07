@@ -53,7 +53,7 @@ func NewUpdateMessage(k Kind) string {
 	return fmt.Sprintf("%s updated successfully", k.String())
 }
 
-const intErr = "internal error:"
+const intErr = "Internal error:"
 
 func NewDecodeError(k Kind) string {
 	return fmt.Sprintf("%s cannot decode %s", intErr, k)
@@ -63,12 +63,20 @@ func NewNotFoundError(k Kind) string {
 	return fmt.Sprintf("%s %s not found", intErr, k)
 }
 
+func NewForbiddenError(k Kind) string {
+	return fmt.Sprintf("Operation on %s forbidden", k)
+}
+
 func NewAlreadyExistError(k Kind) string {
 	return fmt.Sprintf("%s %s already exist", intErr, k)
 }
 
 func NewErrorSave(k Kind) string {
 	return fmt.Sprintf("%s cannot save %s", intErr, k)
+}
+
+func NewErrorRemove(k Kind) string {
+	return fmt.Sprintf("%s cannot remove %s", intErr, k)
 }
 
 func NewErrorValidate(k Kind, errs validator.ValidationErrors) string {

@@ -13,15 +13,17 @@ type CourseDB struct {
 }
 
 func (c *CourseDB) SaveCourse(course *internal.Course) error {
-	guid := xid.New()
-	uid := guid.String()
-	course.CourseID = uid
+	if course.CourseID == "" {
+		guid := xid.New()
+		uid := guid.String()
+		course.CourseID = uid
+	}
 	tasks := course.Task
 	course.Task = []internal.Task{}
 
 	c.db.Save(course)
 	for _, task := range tasks {
-		task.CourseID = uid
+		task.CourseID = course.CourseID
 		c.db.Save(&task)
 	}
 	return nil
@@ -67,6 +69,18 @@ func (c *CourseDB) GetByID(id string) (*internal.Course, error) {
 	return &courses[0], nil
 }
 
+func (u *CourseDB) Exist(courseID string) bool {
+	u.db.RLock()
+	defer u.db.RUnlock()
+	courses := make([]internal.Course, 0)
+
+	u.db.Where(&internal.Course{CourseID: courseID}).Find(&courses)
+	if len(courses) > 0 {
+		return true
+	}
+	return false
+}
+
 func (c *CourseDB) GetManyByID(ids []string) ([]*internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
@@ -79,8 +93,6 @@ func (c *CourseDB) GetManyByID(ids []string) ([]*internal.Course, error) {
 		}
 		courses = append(courses, course)
 	}
-
-	c.db.Where(ids).Find(&courses)
 
 	return courses, nil
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/storage"
 	"github.com/pkg/errors"
@@ -30,6 +31,8 @@ func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
 		return false, nil
 	}
 	result.Passed = true
+
+	fmt.Println(*result)
 	if err := c.db.CourseResult.SaveResult(result); err != nil {
 		return true, err
 	}
@@ -49,8 +52,8 @@ func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
 }
 
 func (c *CourseLogic) isWon(points, maxPoints uint) bool {
-	result := points / maxPoints
-	return float32(result) > c.passPercent
+	result := float32(points) / float32(maxPoints)
+	return result > c.passPercent
 }
 
 func (c *CourseLogic) calculateLevel(points int) int {

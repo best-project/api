@@ -56,7 +56,7 @@ func (c *CourseResultConverter) ToDTO(dto *internal.CourseResult) (*internal.Cou
 }
 
 func (c *CourseResultConverter) ManyToDTO(courses []internal.CourseResult) ([]internal.CourseResultDTO, error) {
-	result := make([]internal.CourseResultDTO, len(courses))
+	result := make([]internal.CourseResultDTO, 0)
 
 	for _, course := range courses {
 		dto, err := c.ToDTO(&course)

@@ -12,6 +12,7 @@ func (*TaskConverter) ConvertToModel(dto internal.TaskDTO) internal.Task {
 		Image:     dto.Image,
 		Translate: dto.Translate,
 		Word:      dto.Word,
+		CourseID:  dto.CourseID,
 	}
 }
 
@@ -31,6 +32,7 @@ func (*TaskConverter) ConvertToDTO(dto internal.Task) internal.TaskDTO {
 		Image:     dto.Image,
 		Translate: dto.Translate,
 		Word:      dto.Word,
+		CourseID:  dto.CourseID,
 	}
 }
 

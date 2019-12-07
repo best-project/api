@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
 type TaskDB struct {
@@ -22,6 +23,21 @@ func (c *TaskDB) GetTasksForCourse(course *internal.Course) []internal.Task {
 	c.db.Where(&internal.Task{CourseID: course.CourseID}).Find(&tasks)
 
 	return tasks
+}
+
+func (c *TaskDB) MapTasksForCourses(courses []*internal.Course) map[string][]internal.Task {
+	c.db.RLock()
+	defer c.db.RUnlock()
+
+	courseTasks := make(map[string][]internal.Task, 0)
+	tasks := make([]internal.Task, 0)
+
+	for _, course := range courses {
+		c.db.Where(&internal.Task{CourseID: course.CourseID}).Find(&tasks)
+		courseTasks[course.CourseID] = tasks
+	}
+
+	return courseTasks
 }
 
 func (c *TaskDB) GetByID(id uint) (*internal.Task, error) {
@@ -46,4 +62,15 @@ func (c *TaskDB) GetManyByID(ids []uint) ([]internal.Task, error) {
 	c.db.Where(ids).Find(&tasks)
 
 	return tasks, nil
+}
+
+func (c *TaskDB) RemoveByID(task *internal.Task) error {
+	c.db.RLock()
+	defer c.db.RUnlock()
+
+	if task.ID == 0 {
+		return errors.New("cannot remove task with id 0")
+	}
+
+	return c.db.Delete(task).Error
 }

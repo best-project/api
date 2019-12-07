@@ -7,7 +7,7 @@ type CourseDTO struct {
 	Name        string    `json:"name" validate:"required"`
 	Description string    `json:"description"`
 	Image       string    `json:"image"`
-	Data        []TaskDTO `json:"data"`
+	Data        []TaskDTO `json:"data,omitempty"`
 
 	Language        string  `json:"language"`
 	DifficultyLevel string  `json:"difficultyLevel"`
@@ -18,7 +18,7 @@ type CourseDTO struct {
 }
 
 type CourseResultDTO struct {
-	UserID   uint   `json:"userId" validate:"required"`
+	UserID   uint   `json:"userId"`
 	CourseID string `json:"courseId" validate:"required"`
 
 	Phase  string `json:"phase" validate:"required"`
@@ -28,6 +28,7 @@ type CourseResultDTO struct {
 
 type TaskDTO struct {
 	ID        string `json:"id"`
+	CourseID  string `json:"courseId"`
 	Word      string `json:"word" validate:"required"`
 	Translate string `json:"translate" validate:"required"`
 	Image     string `json:"image"`

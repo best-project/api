@@ -24,7 +24,7 @@ type Config struct {
 	DbName string
 	DbPort string
 
-	PassPercent float32 `envconfig:"optional" default:"0.7"`
+	PassPercent float32 `envconfig:"optional"`
 	InitDB      bool    `envconfig:"optional" default:"false"`
 }
 

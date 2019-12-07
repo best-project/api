@@ -27,6 +27,12 @@ func (srv *Server) getCourseResultData(body io.ReadCloser) (*internal.CourseResu
 var coursePhases = []string{internal.StartedPhase, internal.FinishedPhase}
 
 func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
+	user, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
 	courseDTO, err := srv.getCourseResultData(r.Body)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while decoding json body"))
@@ -38,8 +44,19 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorValidate(pretty.CourseResult, e))
 		return
 	}
+	if !srv.db.Course.Exist(courseDTO.CourseID) {
+		srv.logger.Errorln(errors.New("course not exist"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewNotFoundError(pretty.Course))
+		return
+	}
+	courseDTO.UserID = user.ID
 
-	course := srv.converter.CourseResultConverter.ToModel(courseDTO)
+	course, err := srv.db.CourseResult.ReplaceIfExist(srv.converter.CourseResultConverter.ToModel(courseDTO))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while replacing started course"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResult))
+		return
+	}
 	if course.Phase == internal.StartedPhase {
 		if err := srv.db.CourseResult.SaveResult(course); err != nil {
 			srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
@@ -49,7 +66,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusCreated, pretty.NewCreateMessage(pretty.CourseResult))
 		return
 	}
-	course.Passed, err = srv.courseLogic.CheckResult(course)
+	passed, err := srv.courseLogic.CheckResult(course)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while checking result"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -60,7 +77,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	dto := struct {
 		Passed bool `json:"passed"`
 	}{}
-	dto.Passed = courseDTO.Passed
+	dto.Passed = passed
 
 	writeResponseJson(w, http.StatusCreated, dto)
 }
@@ -86,6 +103,11 @@ func (srv *Server) getFinishedCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	mappedCourses := srv.db.Task.MapTasksForCourses(result)
+	for _, course := range result {
+		course.Task = mappedCourses[course.CourseID]
+	}
+
 	dto, err := srv.converter.CourseConverter.ManyToDTO(result)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while converting courses to dto"))
@@ -109,12 +131,16 @@ func (srv *Server) getStartedCourses(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
 		return
 	}
-
 	result, err := srv.db.Course.GetManyByID(srv.converter.CourseResultConverter.FetchIDs(courses))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while getting courses"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Courses))
 		return
+	}
+
+	mappedCourses := srv.db.Task.MapTasksForCourses(result)
+	for _, course := range result {
+		course.Task = mappedCourses[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(result)
