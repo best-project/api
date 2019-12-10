@@ -2,7 +2,7 @@ package internal
 
 type CourseDTO struct {
 	CourseID string `json:"id"`
-	UserID   uint   `json:"userId" validate:"required"`
+	UserID   uint   `json:"userId"`
 
 	Name        string    `json:"name" validate:"required"`
 	Description string    `json:"description"`

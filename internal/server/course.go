@@ -1,32 +1,76 @@
 package server
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/pretty"
 	"github.com/choria-io/go-validator/enum"
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	//"github.com/olahol/go-imageupload"
-	"github.com/olahol/go-imageupload"
+	"github.com/rs/xid"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 )
 
 var courseTypes = []string{internal.ImageType, internal.PuzzleType}
 
-func (srv *Server) getCourseData(body io.ReadCloser) (*internal.CourseDTO, error) {
+const (
+	MB = 1 << 20
+)
+
+func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	courseDTO := &internal.CourseDTO{}
-	err := json.NewDecoder(body).Decode(&courseDTO)
-	if err != nil {
-		return nil, errors.Wrapf(err, "while decoding body")
+	if err := r.ParseMultipartForm(MB * 20); err != nil {
+		return nil, err
 	}
+	courseDTO.Name = r.FormValue("name")
+
+	//Content-Type
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		return nil, errors.Wrap(err, "while getting image from form")
+	}
+	defer file.Close()
+
+	imgPath := fmt.Sprintf("/img/course/%s.png", xid.New().String())
+	saveFile, err := os.Create(imgPath)
+	if err != nil {
+		return nil, err
+	}
+	defer saveFile.Close()
+
+	// Use io.Copy to just dump the response body to the file. This supports huge files
+	_, err = io.Copy(saveFile, file)
+	if err != nil {
+		return nil, err
+	}
+	courseDTO.Image = imgPath
+	courseDTO.CourseID = r.FormValue("courseId")
+	courseDTO.Type = r.FormValue("type")
+	courseDTO.Language = r.FormValue("language")
+	courseDTO.DifficultyLevel = r.FormValue("difficultyLevel")
+
 	if _, err := enum.ValidateString(courseDTO.Type, courseTypes); err != nil {
 		return nil, errors.Wrapf(err, "invalid course type %s", courseDTO.Type)
 	}
+	data := srv.ParseFormCollection(r, "data")
+	tasksDTO := make([]internal.TaskDTO, 0)
+	taskDTO := internal.TaskDTO{}
+	for _, task := range data {
+		taskDTO.CourseID = task["courseId"]
+		taskDTO.Image = task["image"]
+		taskDTO.Word = task["word"]
+		taskDTO.Translate = task["translate"]
+		tasksDTO = append(tasksDTO, taskDTO)
+	}
+	courseDTO.Data = tasksDTO
 
 	return courseDTO, nil
 }
@@ -48,42 +92,24 @@ func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
 	}
-	courseDTO, err := srv.getCourseData(r.Body)
+	course, err := srv.getCourseData(r)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while decoding json body"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewDecodeError(pretty.Course))
 		return
 	}
-	if err := srv.validator.Struct(courseDTO); err != nil {
+	if err := srv.validator.Struct(course); err != nil {
 		e := err.(validator.ValidationErrors)
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.Course, e))
 		return
 	}
-	if courseDTO.UserID != user.ID {
-		writeMessageResponse(w, http.StatusForbidden, pretty.NewForbiddenError(pretty.Course))
-		return
-	}
-	img, err := imageupload.Process(r, "image")
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while fetching image"))
-		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
-		return
-	}
-	img, err = img.ThumbnailJPEG(300, 300, 1)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while converting image"))
-		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
-		return
-	}
-	courseDTO.Image = img.DataURI()
-	courseDTO.MaxPoints = len(courseDTO.Data) * srv.xpForTask
 
-	course := srv.converter.CourseConverter.ToModel(courseDTO)
-	course.Task = srv.db.Task.GetTasksForCourse(course)
+	course.UserID = user.ID
+	course.MaxPoints = len(course.Data) * srv.xpForTask
 
-	if err := srv.db.Course.SaveCourse(course); err != nil {
+	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course)); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
-		writeMessageResponse(w, http.StatusInternalServerError, "")
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Course))
 		return
 	}
 
@@ -97,7 +123,7 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
 	}
-	course, err := srv.getCourseData(r.Body)
+	course, err := srv.getCourseData(r)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while decoding json body"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewDecodeError(pretty.Course))
@@ -116,19 +142,7 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusForbidden, pretty.NewForbiddenError(pretty.Course))
 		return
 	}
-	img, err := imageupload.Process(r, "image")
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while fetching image"))
-		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
-		return
-	}
-	img, err = img.ThumbnailJPEG(300, 300, 1)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while converting image"))
-		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
-		return
-	}
-	course.Image = img.DataURI()
+	course.UserID = user.ID
 	course.MaxPoints = len(course.Data) * srv.xpForTask
 
 	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course)); err != nil {
@@ -240,9 +254,10 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Courses))
 		return
 	}
-
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
+		img, _ := imgToBase(course.Image)
+		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 
@@ -254,6 +269,14 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponseJson(w, http.StatusOK, dto)
+}
+
+func imgToBase(path string) (string, error) {
+	img, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(img)), nil
 }
 
 func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
@@ -271,8 +294,11 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 	}
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
+		img, _ := imgToBase(course.Image)
+		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
+
 	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while converting courses to dto"))
@@ -330,6 +356,8 @@ func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
+		img, _ := imgToBase(course.Image)
+		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 
@@ -358,6 +386,13 @@ func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	course.Task = srv.db.Task.GetTasksForCourse(course)
+	img, err := imgToBase(course.Image)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while base image"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.Course))
+		return
+	}
+	course.Image = img
 
 	dto, err := srv.converter.CourseConverter.ToDTO(course)
 	if err != nil {

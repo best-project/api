@@ -12,6 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"net/http"
+	"regexp"
 	"strconv"
 )
 
@@ -134,4 +135,25 @@ func writeResponseJson(w http.ResponseWriter, code int, object interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(data)
+}
+
+func (srv *Server) ParseFormCollection(r *http.Request, typeName string) []map[string]string {
+	var result []map[string]string
+	r.ParseForm()
+	for key, values := range r.Form {
+		re := regexp.MustCompile(typeName + "\\[([0-9]+)\\]\\[([a-zA-Z]+)\\]")
+		matches := re.FindStringSubmatch(key)
+
+		if len(matches) >= 3 {
+
+			index, _ := strconv.Atoi(matches[1])
+
+			for index >= len(result) {
+				result = append(result, map[string]string{})
+			}
+
+			result[index][matches[2]] = values[0]
+		}
+	}
+	return result
 }

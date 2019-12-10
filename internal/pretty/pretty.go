@@ -67,6 +67,10 @@ func NewForbiddenError(k Kind) string {
 	return fmt.Sprintf("Operation on %s forbidden", k)
 }
 
+func NewBadRequest() string {
+	return "Bad request"
+}
+
 func NewAlreadyExistError(k Kind) string {
 	return fmt.Sprintf("%s %s already exist", intErr, k)
 }

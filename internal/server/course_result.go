@@ -103,9 +103,11 @@ func (srv *Server) getFinishedCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mappedCourses := srv.db.Task.MapTasksForCourses(result)
+	mappedTasks := srv.db.Task.MapTasksForCourses(result)
 	for _, course := range result {
-		course.Task = mappedCourses[course.CourseID]
+		img, _ := imgToBase(course.Image)
+		course.Image = img
+		course.Task = mappedTasks[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(result)
@@ -138,9 +140,11 @@ func (srv *Server) getStartedCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mappedCourses := srv.db.Task.MapTasksForCourses(result)
+	mappedTasks := srv.db.Task.MapTasksForCourses(result)
 	for _, course := range result {
-		course.Task = mappedCourses[course.CourseID]
+		img, _ := imgToBase(course.Image)
+		course.Image = img
+		course.Task = mappedTasks[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(result)

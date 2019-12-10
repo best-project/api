@@ -5,6 +5,8 @@ RUN apk add --no-cache curl
 
 COPY . /root
 
+RUN mkdir -p img/course
 
+VOLUME img
 
 ENTRYPOINT ["/root/api"]

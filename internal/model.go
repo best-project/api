@@ -59,7 +59,7 @@ type User struct {
 	Password  string
 	Avatar    string
 
-	Token string `sql:"size:2000"`
+	Token string `sql:"size:500"`
 
 	Level  int
 	Points int
