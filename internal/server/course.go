@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/best-project/api/internal"
@@ -12,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"sort"
@@ -39,7 +37,7 @@ func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	}
 	defer file.Close()
 
-	imgPath := fmt.Sprintf("/img/course/%s.png", xid.New().String())
+	imgPath := fmt.Sprintf("/images/%s.png", xid.New().String())
 	saveFile, err := os.Create(imgPath)
 	if err != nil {
 		return nil, err
@@ -256,8 +254,6 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 	}
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
-		img, _ := imgToBase(course.Image)
-		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 
@@ -269,14 +265,6 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeResponseJson(w, http.StatusOK, dto)
-}
-
-func imgToBase(path string) (string, error) {
-	img, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("data:image/png;base64,%s", base64.StdEncoding.EncodeToString(img)), nil
 }
 
 func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
@@ -294,8 +282,6 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 	}
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
-		img, _ := imgToBase(course.Image)
-		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 
@@ -356,8 +342,6 @@ func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
-		img, _ := imgToBase(course.Image)
-		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 
@@ -386,13 +370,6 @@ func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	course.Task = srv.db.Task.GetTasksForCourse(course)
-	img, err := imgToBase(course.Image)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while base image"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.Course))
-		return
-	}
-	course.Image = img
 
 	dto, err := srv.converter.CourseConverter.ToDTO(course)
 	if err != nil {

@@ -105,8 +105,6 @@ func (srv *Server) getFinishedCourses(w http.ResponseWriter, r *http.Request) {
 
 	mappedTasks := srv.db.Task.MapTasksForCourses(result)
 	for _, course := range result {
-		img, _ := imgToBase(course.Image)
-		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 
@@ -142,8 +140,6 @@ func (srv *Server) getStartedCourses(w http.ResponseWriter, r *http.Request) {
 
 	mappedTasks := srv.db.Task.MapTasksForCourses(result)
 	for _, course := range result {
-		img, _ := imgToBase(course.Image)
-		course.Image = img
 		course.Task = mappedTasks[course.CourseID]
 	}
 

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/best-project/api/internal/converter"
@@ -11,6 +12,8 @@ import (
 	"github.com/madebyais/facebook-go-sdk"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -86,6 +89,8 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/courses/started").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getStartedCourses)))
 	rtr.Path("/courses/finished").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getFinishedCourses)))
 
+	rtr.Path("/images/{name}").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getImage)))
+
 	rtr.Path("/result/save").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.saveResult)))
 	rtr.Path("/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.fetchByXP)))
 	rtr.Path("/ranking/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.courseRanking)))
@@ -93,6 +98,24 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.statusHandler)))
 
 	return rtr
+}
+
+func (srv *Server) getImage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filename := vars["name"]
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+	w.Header().Set("Content-Length", r.Header.Get("Content-Length"))
+
+	file, err := ioutil.ReadFile(fmt.Sprintf("images/%s", filename))
+	if err != nil {
+		srv.logger.Errorln(err)
+		return
+	}
+
+	//stream the body to the client without fully loading it into memory
+	io.Copy(w, bytes.NewReader(file))
 }
 
 func (srv *Server) statusHandler(w http.ResponseWriter, r *http.Request) {
