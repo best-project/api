@@ -16,8 +16,10 @@ type Course struct {
 	Language        string
 	DifficultyLevel string
 	Rate            float32
-	Type            string
-	MaxPoints       int
+	RateCounter     int
+
+	Type      string
+	MaxPoints int
 }
 
 const (

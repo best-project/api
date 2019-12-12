@@ -102,6 +102,7 @@ func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	course.Rate = 3
 	course.UserID = user.ID
 	course.MaxPoints = len(course.Data) * srv.xpForTask
 
@@ -150,6 +151,35 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeMessageResponse(w, http.StatusOK, pretty.NewUpdateMessage(pretty.Course))
+}
+
+func (srv *Server) rateCourse(w http.ResponseWriter, r *http.Request) {
+	rateDTO := struct {
+		Rate     int    `json:"rate"`
+		CourseID string `json:"courseId"`
+	}{}
+	err := json.NewDecoder(r.Body).Decode(&rateDTO)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	course, err := srv.db.Course.GetByID(rateDTO.CourseID)
+
+	rate := float32(course.RateCounter) * course.Rate
+	rate += float32(rateDTO.Rate)
+
+	course.Rate = float32(rate / float32(course.RateCounter+1))
+	course.RateCounter++
+
+	if err := srv.db.Course.SaveCourse(course); err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	writeMessageResponse(w, http.StatusOK, pretty.NewCreateMessage(pretty.Course))
 }
 
 func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {

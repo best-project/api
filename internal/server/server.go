@@ -92,6 +92,7 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/images/{name}").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getImage)))
 
 	rtr.Path("/result/save").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.saveResult)))
+	rtr.Path("/rate").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.rateCourse)))
 	rtr.Path("/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.fetchByXP)))
 	rtr.Path("/ranking/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.courseRanking)))
 
@@ -111,6 +112,7 @@ func (srv *Server) getImage(w http.ResponseWriter, r *http.Request) {
 	file, err := ioutil.ReadFile(fmt.Sprintf("images/%s", filename))
 	if err != nil {
 		srv.logger.Errorln(err)
+		writeErrorResponse(w, http.StatusBadRequest, err)
 		return
 	}
 

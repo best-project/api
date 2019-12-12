@@ -75,9 +75,13 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	srv.logger.Info("trying to save result")
 
 	dto := struct {
-		Passed bool `json:"passed"`
+		Passed   bool   `json:"passed"`
+		CourseId string `json:"courseId"`
+		Points   uint   `json:"points"`
 	}{}
 	dto.Passed = passed
+	dto.Points = course.Points
+	dto.CourseId = course.CourseID
 
 	writeResponseJson(w, http.StatusCreated, dto)
 }
