@@ -32,7 +32,6 @@ func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
 	}
 	result.Passed = true
 
-	fmt.Println(*result)
 	if err := c.db.CourseResult.SaveResult(result); err != nil {
 		return true, err
 	}
@@ -42,7 +41,7 @@ func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
 		return true, err
 	}
 	user.Points += int(result.Points)
-	user.Level = c.calculateLevel(user.Points)
+	user.Level, user.NextLevel = c.calculateLevel(user.Points)
 	if err = c.db.User.SaveUser(user); err != nil {
 		return true, err
 	}
@@ -56,13 +55,13 @@ func (c *CourseLogic) isWon(points, maxPoints uint) bool {
 	return result > c.passPercent
 }
 
-func (c *CourseLogic) calculateLevel(points int) int {
-	xp := 0
-	for i := 0; true; i++ {
-		xp += int(float64(firstLevel+10*i) * float64(1.2))
-		if xp > points {
-			return i
+func (c *CourseLogic) calculateLevel(points int) (int, int) {
+	nextLvl := 0
+	for i := 1; true; i++ {
+		nextLvl += int(float64(firstLevel+10*i) * float64(1.2))
+		if nextLvl > points {
+			return i, nextLvl
 		}
 	}
-	return 1
+	return 1, nextLvl
 }

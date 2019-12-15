@@ -9,14 +9,12 @@ import (
 type Converter struct {
 	CourseConverter       *CourseConverter
 	CourseResultConverter *CourseResultConverter
-	db                    *storage.Database
 }
 
-func NewConverter(db *storage.Database) *Converter {
+func NewConverter() *Converter {
 	return &Converter{
-		db:                    db,
-		CourseConverter:       NewCourseConverter(db, &TaskConverter{}),
-		CourseResultConverter: NewCourseResultConverter(db),
+		CourseConverter:       NewCourseConverter(&TaskConverter{}),
+		CourseResultConverter: NewCourseResultConverter(),
 	}
 }
 
@@ -53,30 +51,25 @@ func (c *Converter) ToModel(dto *internal.UserDTO) *internal.User {
 		LastName:  dto.LastName,
 		Email:     dto.Email,
 		Password:  dto.Password,
-		//ProfileCourses: c.CourseConverter.ManyToModel(dto.ProfileCourses),
-		Points: dto.Points,
-		Avatar: dto.Avatar,
-		Level:  dto.Level,
+		NextLevel: dto.NextLevel,
+		Points:    dto.Points,
+		Avatar:    dto.Avatar,
+		Level:     dto.Level,
 	}
 }
 
 func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
-	//profileCoursesDTO, err := u.CourseConverter.ManyToDTO(dto.ProfileCourses)
-	//if err != nil {
-	//	return nil, errors.Wrap(err, "while converting profile courses")
-	//}
-
 	return &internal.UserDTO{
 		FirstName: dto.FirstName,
 		LastName:  dto.LastName,
 		Password:  "",
 		Level:     dto.Level,
 		Avatar:    dto.Avatar,
+		NextLevel: dto.NextLevel,
 		Points:    dto.Points,
 		Token:     dto.Token,
-		//ProfileCourses: profileCoursesDTO,
-		Email: dto.Email,
-		ID:    int(dto.ID),
+		Email:     dto.Email,
+		ID:        int(dto.ID),
 	}, nil
 }
 

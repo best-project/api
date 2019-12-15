@@ -50,7 +50,7 @@ func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service
 		fb:     fb,
 		db:     db,
 
-		converter:   converter.NewConverter(db),
+		converter:   converter.NewConverter(),
 		courseLogic: courseLogic,
 		validator:   validator.New(),
 

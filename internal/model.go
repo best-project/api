@@ -63,6 +63,7 @@ type User struct {
 
 	Token string `sql:"size:500"`
 
-	Level  int
-	Points int
+	Level     int
+	NextLevel int
+	Points    int
 }

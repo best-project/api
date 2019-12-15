@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/best-project/api/internal"
-	"github.com/best-project/api/internal/pretty"
+	"github.com/best-project/api/internal/server/pretty"
 	"github.com/choria-io/go-validator/enum"
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"

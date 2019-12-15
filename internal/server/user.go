@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/best-project/api/internal"
-	"github.com/best-project/api/internal/pretty"
+	"github.com/best-project/api/internal/server/pretty"
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"

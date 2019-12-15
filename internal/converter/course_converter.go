@@ -8,13 +8,11 @@ import (
 
 type CourseConverter struct {
 	TaskConverter *TaskConverter
-	db            *storage.Database
 }
 
-func NewCourseConverter(db *storage.Database, taskConverter *TaskConverter) *CourseConverter {
+func NewCourseConverter(taskConverter *TaskConverter) *CourseConverter {
 	return &CourseConverter{
 		TaskConverter: taskConverter,
-		db:            db,
 	}
 }
 

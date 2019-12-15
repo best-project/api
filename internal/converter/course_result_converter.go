@@ -6,14 +6,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CourseResultConverter struct {
-	db *storage.Database
-}
+type CourseResultConverter struct {}
 
-func NewCourseResultConverter(db *storage.Database) *CourseResultConverter {
-	return &CourseResultConverter{
-		db: db,
-	}
+func NewCourseResultConverter() *CourseResultConverter {
+	return &CourseResultConverter{}
 }
 
 func (c *CourseResultConverter) ToModel(dto *internal.CourseResultDTO) *internal.CourseResult {
