@@ -16,3 +16,4 @@ api
 .idea/
 .env/
 vendor/
+deploy/

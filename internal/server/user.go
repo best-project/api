@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func (srv *Server) readUserData(body io.ReadCloser) (*internal.UserDTO, error) {
@@ -112,19 +113,71 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}))
+	now := time.Now()
+	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute * 30).Unix()))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while creating token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
 	}
+	refreshToken, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Hour * 12).Unix()))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while creating refresh token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
 	user.Token = token
+	user.RefreshToken = refreshToken
 	if err := srv.db.User.SaveUser(&user); err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
 		return
 	}
 	result, err := srv.converter.ToDTO(user)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while converting to dto"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.User))
+		return
+	}
+
+	writeResponseJson(w, http.StatusOK, result)
+}
+
+func (srv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	token := vars["token"]
+	if token == "" {
+		srv.logger.Errorln("token cannot be empty")
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewForbiddenError(pretty.User))
+		return
+	}
+
+	userClaim, err := ParseJWT(token)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while parsing jwt"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewForbiddenError(pretty.User))
+		return
+	}
+	user, err := srv.db.User.GetByID(userClaim.ID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while parsing jwt"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.User))
+		return
+	}
+	now := time.Now()
+	token, err = NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute * 30).Unix()))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while creating token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+	user.Token = token
+	if err := srv.db.User.SaveUser(user); err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
+		return
+	}
+	result, err := srv.converter.ToDTO(*user)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while converting to dto"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.User))

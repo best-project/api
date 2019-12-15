@@ -20,11 +20,11 @@ type CustomClaims struct {
 
 var signingKey = []byte("jwt")
 
-func NewCustomPayload(user *UserClaim) *CustomClaims {
+func NewCustomPayload(user *UserClaim, expire int64) *CustomClaims {
 	now := time.Now()
 	return &CustomClaims{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: now.Add(24 * time.Hour).Unix(),
+			ExpiresAt: expire,
 			IssuedAt:  now.Unix(),
 		},
 		User: user,

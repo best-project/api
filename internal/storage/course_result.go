@@ -57,7 +57,7 @@ func (c *CourseResultDB) ReplaceIfExist(result *internal.CourseResult) (*interna
 	defer c.db.RUnlock()
 
 	results := make([]internal.CourseResult, 0)
-	err := c.db.Where(internal.CourseResult{UserID: result.UserID, CourseID: result.CourseID, Phase: internal.StartedPhase}).Find(&results).Error
+	err := c.db.Where(internal.CourseResult{UserID: result.UserID, CourseID: result.CourseID, Phase: result.Phase}).Find(&results).Error
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +65,9 @@ func (c *CourseResultDB) ReplaceIfExist(result *internal.CourseResult) (*interna
 		return result, nil
 	}
 	if result.Phase == internal.FinishedPhase {
+		if results[0].Points > result.Points {
+			return &results[0], nil
+		}
 		result.Model = results[0].Model
 		return result, nil
 	}

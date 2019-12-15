@@ -46,29 +46,31 @@ func (c *Converter) ManyToUserStat(dtos []internal.User) []*internal.UserStatDTO
 
 func (c *Converter) ToModel(dto *internal.UserDTO) *internal.User {
 	return &internal.User{
-		FirstName: dto.FirstName,
-		LastName:  dto.LastName,
-		Email:     dto.Email,
-		Password:  dto.Password,
-		NextLevel: dto.NextLevel,
-		Points:    dto.Points,
-		Avatar:    dto.Avatar,
-		Level:     dto.Level,
+		FirstName:    dto.FirstName,
+		LastName:     dto.LastName,
+		Email:        dto.Email,
+		Password:     dto.Password,
+		NextLevel:    dto.NextLevel,
+		Points:       dto.Points,
+		Avatar:       dto.Avatar,
+		Level:        dto.Level,
+		RefreshToken: dto.RefreshToken,
 	}
 }
 
 func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
 	return &internal.UserDTO{
-		FirstName: dto.FirstName,
-		LastName:  dto.LastName,
-		Password:  "",
-		Level:     dto.Level,
-		Avatar:    dto.Avatar,
-		NextLevel: dto.NextLevel,
-		Points:    dto.Points,
-		Token:     dto.Token,
-		Email:     dto.Email,
-		ID:        int(dto.ID),
+		FirstName:    dto.FirstName,
+		LastName:     dto.LastName,
+		Password:     "",
+		Level:        dto.Level,
+		Avatar:       dto.Avatar,
+		NextLevel:    dto.NextLevel,
+		Points:       dto.Points,
+		Token:        dto.Token,
+		Email:        dto.Email,
+		ID:           int(dto.ID),
+		RefreshToken: dto.RefreshToken,
 	}, nil
 }
 

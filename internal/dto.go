@@ -41,7 +41,8 @@ type UserDTO struct {
 	Password  string `json:"password,omitempty" validate:"required,min=8,max=250"`
 	Avatar    string `json:"avatar"`
 
-	Token string `json:"token"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
 
 	ID int `json:"id"`
 

@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CourseResultConverter struct {}
+type CourseResultConverter struct{}
 
 func NewCourseResultConverter() *CourseResultConverter {
 	return &CourseResultConverter{}

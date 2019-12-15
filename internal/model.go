@@ -62,6 +62,7 @@ type User struct {
 	Avatar    string
 
 	Token string `sql:"size:500"`
+	RefreshToken string `sql:"size:500"`
 
 	Level     int
 	NextLevel int
