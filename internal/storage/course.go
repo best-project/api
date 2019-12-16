@@ -12,7 +12,7 @@ type CourseDB struct {
 	db *gorm.DB
 }
 
-func (c *CourseDB) SaveCourse(course *internal.Course) error {
+func (c *CourseDB) SaveCourse(course *internal.Course, xpForTask int) error {
 	if course.CourseID == "" {
 		guid := xid.New()
 		uid := guid.String()
@@ -20,6 +20,7 @@ func (c *CourseDB) SaveCourse(course *internal.Course) error {
 	}
 	tasks := course.Task
 	course.Task = []internal.Task{}
+	course.MaxPoints = len(tasks) * xpForTask
 
 	c.db.Save(course)
 	for _, task := range tasks {

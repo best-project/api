@@ -61,7 +61,7 @@ type User struct {
 	Password  string
 	Avatar    string
 
-	Token string `sql:"size:500"`
+	Token        string `sql:"size:500"`
 	RefreshToken string `sql:"size:500"`
 
 	Level     int

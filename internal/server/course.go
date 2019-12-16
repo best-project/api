@@ -106,7 +106,7 @@ func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 	course.UserID = user.ID
 	course.MaxPoints = len(course.Data) * srv.xpForTask
 
-	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course)); err != nil {
+	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course), srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Course))
 		return
@@ -144,7 +144,7 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 	course.UserID = user.ID
 	course.MaxPoints = len(course.Data) * srv.xpForTask
 
-	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course)); err != nil {
+	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course), srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, "")
 		return
@@ -173,7 +173,7 @@ func (srv *Server) rateCourse(w http.ResponseWriter, r *http.Request) {
 	course.Rate = float32(rate / float32(course.RateCounter+1))
 	course.RateCounter++
 
-	if err := srv.db.Course.SaveCourse(course); err != nil {
+	if err := srv.db.Course.SaveCourse(course, srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
@@ -216,7 +216,7 @@ func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
 	course.Task = append(course.Task, srv.converter.CourseConverter.TaskConverter.ManyToModel(tasks)...)
 	course.MaxPoints = len(course.Task) * srv.xpForTask
 
-	if err := srv.db.Course.SaveCourse(course); err != nil {
+	if err := srv.db.Course.SaveCourse(course, srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, "")
 		return
@@ -266,7 +266,7 @@ func (srv *Server) removeTasksFromCourse(w http.ResponseWriter, r *http.Request)
 	}
 	course.MaxPoints -= srv.xpForTask
 
-	if err := srv.db.Course.SaveCourse(course); err != nil {
+	if err := srv.db.Course.SaveCourse(course, srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, "")
 		return

@@ -114,13 +114,13 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute * 30).Unix()))
+	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute*30).Unix()))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while creating token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
 	}
-	refreshToken, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Hour * 12).Unix()))
+	refreshToken, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Hour*12).Unix()))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while creating refresh token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -165,7 +165,7 @@ func (srv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now()
-	token, err = NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute * 30).Unix()))
+	token, err = NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute*30).Unix()))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while creating token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
