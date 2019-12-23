@@ -27,5 +27,5 @@ require (
 	github.com/urfave/negroni v1.0.0
 	github.com/vrischmann/envconfig v1.2.0
 	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/go-playground/assert.v1 v1.2.1
 )

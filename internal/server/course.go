@@ -210,17 +210,21 @@ func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewDecodeError(pretty.Course))
 		return
 	}
-	if err := srv.validator.Struct(tasks); err != nil {
-		e := err.(validator.ValidationErrors)
-		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.Course, e))
-		return
-	}
 	if len(tasks) == 0 {
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.Course))
 		return
 	}
+	for _, task := range tasks {
+		if err := srv.validator.Struct(task); err != nil {
+			e := err.(validator.ValidationErrors)
+			writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.Course, e))
+			return
+		}
+	}
+
 	course, err := srv.db.Course.GetByID(tasks[0].CourseID)
 	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while getting by id %s", tasks[0].CourseID))
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewNotFoundError(pretty.Course))
 		return
 	}
