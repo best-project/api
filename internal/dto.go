@@ -54,6 +54,7 @@ type UserDTO struct {
 type UserStatDTO struct {
 	UserID uint   `json:"user_id"`
 	Email  string `json:"username"`
+	Avatar string `json:"avatar"`
 	Points int    `json:"points"`
 	Level  int    `json:"level"`
 }

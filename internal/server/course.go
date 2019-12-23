@@ -15,9 +15,10 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"time"
 )
 
-var courseTypes = []string{internal.ImageType, internal.PuzzleType}
+var courseTypes = []string{internal.NormalType, internal.PuzzleType}
 
 const (
 	MB = 1 << 20
@@ -141,10 +142,19 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusForbidden, pretty.NewForbiddenError(pretty.Course))
 		return
 	}
-	course.UserID = user.ID
-	course.MaxPoints = len(course.Data) * srv.xpForTask
 
-	if err := srv.db.Course.SaveCourse(srv.converter.CourseConverter.ToModel(course), srv.xpForTask); err != nil {
+	courseModel, err := srv.db.Course.GetByID(course.CourseID)
+	if err != nil {
+		writeMessageResponse(w, http.StatusForbidden, pretty.NewErrorGet(pretty.User))
+		return
+	}
+	courseModel.Description = course.Description
+	courseModel.Image = course.Image
+	courseModel.Language = course.Language
+	courseModel.Name = course.Name
+	courseModel.UpdatedAt = time.Now()
+
+	if err := srv.db.Course.SaveCourse(courseModel, srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, "")
 		return
@@ -166,6 +176,11 @@ func (srv *Server) rateCourse(w http.ResponseWriter, r *http.Request) {
 	}
 
 	course, err := srv.db.Course.GetByID(rateDTO.CourseID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while getting course %s", rateDTO.CourseID))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.Course))
+		return
+	}
 
 	rate := float32(course.RateCounter) * course.Rate
 	rate += float32(rateDTO.Rate)
@@ -313,6 +328,24 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
 	for _, course := range courses {
 		course.Task = mappedTasks[course.CourseID]
+	}
+
+	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while converting courses to dto"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.Courses))
+		return
+	}
+
+	writeResponseJson(w, http.StatusOK, dto)
+}
+
+func (srv *Server) getAllCoursesMetadata(w http.ResponseWriter, r *http.Request) {
+	courses, err := srv.db.Course.GetAll()
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while getting course"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.Course))
+		return
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)

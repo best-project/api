@@ -23,7 +23,7 @@ type Course struct {
 }
 
 const (
-	ImageType  string = "image"
+	NormalType string = "normal"
 	PuzzleType string = "puzzle"
 )
 

@@ -2,14 +2,17 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/server/pretty"
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -215,6 +218,7 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 	user.Password = string(pass)
 	user.Level = 1
+	user.NextLevel = srv.courseLogic.PointForNextLevel(user.Points)
 	if err := srv.db.User.SaveUser(user); err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
@@ -225,7 +229,85 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	writeMessageResponse(w, http.StatusCreated, pretty.NewCreateMessage(pretty.User))
 }
 
-func (srv *Server) fetchByXP(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) getUserDataFromForm(r *http.Request) (*internal.UserDTO, error) {
+	if err := r.ParseMultipartForm(MB * 20); err != nil {
+		return nil, err
+	}
+	file, _, err := r.FormFile("image")
+	if err != nil {
+		return nil, errors.Wrap(err, "while getting image from form")
+	}
+	defer file.Close()
+
+	imgPath := fmt.Sprintf("/images/%s.png", xid.New().String())
+	saveFile, err := os.Create(imgPath)
+	if err != nil {
+		return nil, err
+	}
+	defer saveFile.Close()
+
+	// Use io.Copy to just dump the response body to the file. This supports huge files
+	_, err = io.Copy(saveFile, file)
+	if err != nil {
+		return nil, err
+	}
+	userDTO := &internal.UserDTO{
+		Email:     r.FormValue("email"),
+		FirstName: r.FormValue("firstName"),
+		LastName:  r.FormValue("lastName"),
+		Password:  r.FormValue("password"),
+		Avatar:    imgPath,
+	}
+	return userDTO, nil
+}
+
+func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
+	userData, err := srv.getUserDataFromForm(r)
+	if err != nil {
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.User))
+		return
+	}
+	if err := srv.validator.Struct(userData); err != nil {
+		e := err.(validator.ValidationErrors)
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.User, e))
+		return
+	}
+	token, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+	user, err := srv.db.User.GetByID(token.ID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while getting user"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.User))
+		return
+	}
+
+	pass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while hashing password"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	user.Email = userData.Email
+	user.FirstName = userData.FirstName
+	user.LastName = userData.LastName
+	user.Avatar = userData.Avatar
+	user.Password = string(pass)
+	if err := srv.db.User.SaveUser(user); err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
+		return
+	}
+
+	srv.logger.Infof("user %s was created", user.Email)
+	writeMessageResponse(w, http.StatusCreated, pretty.NewCreateMessage(pretty.User))
+}
+
+func (srv *Server) usersRanking(w http.ResponseWriter, r *http.Request) {
 	users, err := srv.db.User.GetAll()
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while listing users"))
@@ -239,48 +321,30 @@ func (srv *Server) fetchByXP(w http.ResponseWriter, r *http.Request) {
 	writeResponseJson(w, http.StatusOK, srv.converter.ManyToUserStat(users))
 }
 
-//func (srv *Server) redirectToFb(w http.ResponseWriter, r *http.Request) {
-//	http.Redirect(w, r, fmt.Sprintf("https://www.facebook.com/v2.10/dialog/oauth?client_id=%s&redirect_uri=%s", srv.fb.GetAppID(), srv.fbCallbackURL), http.StatusTemporaryRedirect)
-//}
-//func (srv *Server) createUserFb(w http.ResponseWriter, r *http.Request) {
-//
-//	data, err := srv.fb.GenerateAccessToken(srv.fbCallbackURL, r.URL.Query().Get("code"))
-//	if err != nil {
-//		writeMessageResponse()(w, http.StatusInternalServerError, errors.New("while generating access token"))
-//		return
-//	}
-//	srv.fb.SetAccessToken(fmt.Sprintf("%v", data["access_token"]))
-//
-//	feed, err := srv.fb.API("/me").Get()
-//	if err != nil {
-//		writeMessageResponse()(w, http.StatusInternalServerError, errors.Wrap(err, "while getting user info"))
-//		return
-//	}
-//	fmt.Println("FB:", feed)
-//
-//	token, err := NewJWT(NewCustomPayload(&UserClaim{}))
-//	if err != nil {
-//		writeMessageResponse()(w, http.StatusInternalServerError, errors.New("while creating token"))
-//		return
-//	}
-//
-//	writeResponseBody(w, http.StatusCreated, []byte(token))
-//}
-//
-//func (srv *Server) redirectToInstagram(w http.ResponseWriter, r *http.Request) {
-//	http.Redirect(w, r, "", http.StatusTemporaryRedirect)
-//}
-//
-//func (srv *Server) createUserInstagram(w http.ResponseWriter, r *http.Request) {
-//	//user := &internal.User{}
-//	//
-//	//
-//	//
-//	//token, err := jwt.Sign(pl, signingKey)
-//	//if err != nil {
-//	//	writeMessageResponse()(w, http.StatusInternalServerError, "while creating user")
-//	//	return
-//	//}
-//
-//	writeResponseBody(w, http.StatusCreated, []byte{})
-//}
+func (srv *Server) userRanking(w http.ResponseWriter, r *http.Request) {
+	token, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	results, err := srv.db.CourseResult.ListFinishedForUser(token.ID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while listing finished results"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
+		return
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Points < results[j].Points
+	})
+
+	dto, err := srv.converter.CourseResultConverter.ManyToDTO(results)
+	if err != nil {
+		srv.logger.Errorln(errors.New("cannot convert results to dto"))
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorConvert(pretty.CourseResult))
+		return
+	}
+	writeResponseJson(w, http.StatusOK, dto)
+}

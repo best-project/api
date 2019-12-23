@@ -32,6 +32,7 @@ func (c *Converter) ToUserStat(dto internal.User) *internal.UserStatDTO {
 		UserID: dto.ID,
 		Level:  dto.Level,
 		Email:  dto.Email,
+		Avatar: dto.Avatar,
 	}
 }
 

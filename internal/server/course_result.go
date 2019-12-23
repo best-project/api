@@ -51,7 +51,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	}
 	courseDTO.UserID = user.ID
 
-	course, err := srv.db.CourseResult.ReplaceIfExist(srv.converter.CourseResultConverter.ToModel(courseDTO))
+	course, bestPoints, err := srv.db.CourseResult.ReplaceIfExist(srv.converter.CourseResultConverter.ToModel(courseDTO))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while replacing started course"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResult))
@@ -75,13 +75,15 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	srv.logger.Info("trying to save result")
 
 	dto := struct {
-		Passed   bool   `json:"passed"`
-		CourseId string `json:"courseId"`
-		Points   uint   `json:"points"`
+		Passed     bool   `json:"passed"`
+		CourseId   string `json:"courseId"`
+		Points     uint   `json:"points"`
+		BestPoints uint   `json:"bestPoints"`
 	}{}
 	dto.Passed = passed
 	dto.Points = course.Points
 	dto.CourseId = course.CourseID
+	dto.BestPoints = bestPoints
 
 	writeResponseJson(w, http.StatusCreated, dto)
 }

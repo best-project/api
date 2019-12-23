@@ -46,7 +46,11 @@ func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
 	}
 
 	return true, nil
+}
 
+func (c *CourseLogic) PointForNextLevel(points int) int {
+	_, nextLvl := c.calculateLevel(points)
+	return nextLvl
 }
 
 func (c *CourseLogic) isWon(points, maxPoints uint) bool {
@@ -57,9 +61,10 @@ func (c *CourseLogic) isWon(points, maxPoints uint) bool {
 func (c *CourseLogic) calculateLevel(points int) (int, int) {
 	nextLvl := 0
 	for i := 1; true; i++ {
-		nextLvl += int(float64(firstLevel+10*i) * float64(1.2))
+		xpNeeded := int(float64(firstLevel+10*i) * float64(1.2))
+		nextLvl += xpNeeded
 		if nextLvl > points {
-			return i, nextLvl
+			return i, xpNeeded
 		}
 	}
 	return 1, nextLvl

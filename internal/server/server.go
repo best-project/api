@@ -32,19 +32,9 @@ type Server struct {
 	xpForTask int
 
 	converter *converter.Converter
-
-	fbCallbackURL        string
-	instagramCallbackURL string
 }
 
-const (
-	fbEndpoint        = "/register/fb/callback"
-	instagramEndpoint = "/register/instagram/callback"
-)
-
 func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service.CourseLogic, logger *logrus.Logger) *Server {
-	host := "https://secret-cliffs-62699.herokuapp.com/"
-
 	return &Server{
 		logger: logger,
 		fb:     fb,
@@ -55,28 +45,23 @@ func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service
 		validator:   validator.New(),
 
 		xpForTask: 10,
-
-		host:                 host,
-		fbCallbackURL:        fmt.Sprintf("%s%s", host, fbEndpoint),
-		instagramCallbackURL: fmt.Sprintf("%s%s", host, instagramEndpoint),
 	}
 }
 
 // Handle creates an http handler
 func (srv *Server) Handle() http.Handler {
 	var rtr = mux.NewRouter()
-
 	tokenCheckMiddleware := TokenCheckMiddleware{}
 
 	rtr.Path("/login").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.loginUser)))
 	rtr.Path("/register/user").Methods(http.MethodPost).Handler(negroni.New(negroni.WrapFunc(srv.createUser)))
-	//rtr.Path("/register/fb").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToFb)))
-	//rtr.Path("/register/instagram").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.redirectToInstagram)))
 
 	rtr.Path("/user").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserByToken)))
+	rtr.Path("/user/update").Methods(http.MethodPut).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.updateUser)))
 	rtr.Path("/user/refresh/{token}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.refreshToken)))
 	rtr.Path("/user/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserByID)))
 	rtr.Path("/user/courses/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCoursesByUserID)))
+	rtr.Path("/user/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.userRanking)))
 
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/update").Methods(http.MethodPut).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.updateCourse)))
@@ -87,16 +72,16 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/courses").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserCourses)))
 	rtr.Path("/courses/meta").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserCoursesMetadata)))
 	rtr.Path("/courses/all").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getAllCourses)))
+	rtr.Path("/courses/all/meta").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getAllCoursesMetadata)))
 	rtr.Path("/courses/started").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getStartedCourses)))
 	rtr.Path("/courses/finished").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getFinishedCourses)))
 
-	rtr.Path("/images/{name}").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getImage)))
-
 	rtr.Path("/result/save").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.saveResult)))
 	rtr.Path("/rate").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.rateCourse)))
-	rtr.Path("/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.fetchByXP)))
+	rtr.Path("/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.usersRanking)))
 	rtr.Path("/ranking/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.courseRanking)))
 
+	rtr.Path("/images/{name}").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.getImage)))
 	rtr.Path("/status").Methods(http.MethodGet).Handler(negroni.New(negroni.WrapFunc(srv.statusHandler)))
 
 	return rtr
