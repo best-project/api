@@ -47,6 +47,9 @@ func NewServer(db *storage.Database, fb facebook.Interface, courseLogic *service
 		xpForTask: 10,
 	}
 }
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
 
 // Handle creates an http handler
 func (srv *Server) Handle() http.Handler {
