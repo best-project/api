@@ -24,11 +24,10 @@ type Server struct {
 	fb     facebook.Interface
 	db     *storage.Database
 
-	courseLogic *service.CourseLogic
+	courseLogic service.CourseResultHandler
 	validator   *validator.Validate
 
-	host string
-
+	host      string
 	xpForTask int
 
 	converter *converter.Converter
@@ -95,7 +94,7 @@ func (srv *Server) getImage(w http.ResponseWriter, r *http.Request) {
 	filename := vars["name"]
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
-	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
+	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Content-Length", r.Header.Get("Content-Length"))
 
 	file, err := ioutil.ReadFile(fmt.Sprintf("images/%s", filename))

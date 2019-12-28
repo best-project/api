@@ -7,15 +7,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-type User struct {
+type UserDB struct {
 	db *gorm.DB
 }
 
-func (u *User) SaveUser(user *internal.User) error {
+func (u *UserDB) SaveUser(user *internal.User) error {
 	return u.db.Save(user).Error
 }
 
-func (u *User) Exist(user *internal.User) bool {
+func (u *UserDB) Exist(user *internal.User) bool {
 	u.db.RLock()
 	defer u.db.RUnlock()
 	users := make([]internal.User, 0)
@@ -27,7 +27,7 @@ func (u *User) Exist(user *internal.User) bool {
 	return false
 }
 
-func (u *User) GetByID(id uint) (*internal.User, error) {
+func (u *UserDB) GetByID(id uint) (*internal.User, error) {
 	u.db.RLock()
 	defer u.db.RUnlock()
 	user := &internal.User{}
@@ -39,7 +39,7 @@ func (u *User) GetByID(id uint) (*internal.User, error) {
 	return user, nil
 }
 
-func (u *User) GetManyByID(ids []uint) ([]internal.User, error) {
+func (u *UserDB) GetManyByID(ids []uint) ([]internal.User, error) {
 	u.db.Lock()
 	defer u.db.Unlock()
 
@@ -49,7 +49,7 @@ func (u *User) GetManyByID(ids []uint) ([]internal.User, error) {
 	return users, nil
 }
 
-func (u *User) GetByMail(email string) ([]internal.User, error) {
+func (u *UserDB) GetByMail(email string) ([]internal.User, error) {
 	u.db.RLock()
 	defer u.db.RUnlock()
 	users := make([]internal.User, 0)
@@ -62,7 +62,7 @@ func (u *User) GetByMail(email string) ([]internal.User, error) {
 	return users, nil
 }
 
-func (u *User) GetAll() ([]internal.User, error) {
+func (u *UserDB) GetAll() ([]internal.User, error) {
 	u.db.RLock()
 	defer u.db.RUnlock()
 	users := make([]internal.User, 0)

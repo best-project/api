@@ -13,10 +13,10 @@ import (
 )
 
 type Database struct {
-	User         *User
-	Task         *TaskDB
-	Course       *CourseDB
-	CourseResult *CourseResultDB
+	User         User
+	Task         Task
+	Course       Course
+	CourseResult CourseResult
 }
 
 func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
@@ -29,7 +29,7 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		return nil, errors.Wrap(err, "unable to connect to database")
 	}
 
-	userDB := &User{db}
+	userDB := &UserDB{db}
 	taskDB := &TaskDB{db}
 	courseDB := &CourseDB{db}
 	courseResultsDB := &CourseResultDB{db}

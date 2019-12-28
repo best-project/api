@@ -7,12 +7,16 @@ import (
 )
 
 type CourseLogic struct {
-	db *storage.Database
-
+	db          *storage.Database
 	passPercent float32
 }
 
 var firstLevel = 100
+
+type CourseResultHandler interface {
+	CheckResult(result *internal.CourseResult) (bool, error)
+	PointForNextLevel(points int) int
+}
 
 func NewCourseLogic(db *storage.Database, passPercent float32) *CourseLogic {
 	return &CourseLogic{
