@@ -14,6 +14,8 @@ type CourseDTO struct {
 	Rate            float32 `json:"rate"`
 	MaxPoints       int     `json:"maxPoints"`
 
+	BestPoints int `json:"bestPoints"`
+
 	Type string `json:"type" validate:"required"`
 }
 

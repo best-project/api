@@ -6,9 +6,11 @@ import (
 	"github.com/best-project/api/internal/server/pretty"
 	"github.com/choria-io/go-validator/enum"
 	"github.com/go-playground/validator"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
+	"sort"
 )
 
 func (srv *Server) getCourseResultData(body io.ReadCloser) (*internal.CourseResultDTO, error) {
@@ -51,14 +53,18 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	}
 	courseDTO.UserID = user.ID
 
-	course, bestPoints, err := srv.db.CourseResult.ReplaceIfExist(srv.converter.CourseResultConverter.ToModel(courseDTO))
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while replacing started course"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResult))
-		return
-	}
-	if course.Phase == internal.StartedPhase {
-		if err := srv.db.CourseResult.SaveResult(course); err != nil {
+	result := srv.converter.CourseResultConverter.ToModel(courseDTO)
+	if courseDTO.Phase == internal.StartedPhase {
+		results, err := srv.db.CourseResult.ListStartedForUser(courseDTO.UserID)
+		if err != nil {
+			srv.logger.Errorln(errors.Wrapf(err, "while listing for user %d", courseDTO.UserID))
+			writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
+			return
+		}
+		if len(results) == 1 {
+			result.Model = results[0].Model
+		}
+		if err := srv.db.CourseResult.SaveResult(result); err != nil {
 			srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 			writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.CourseResult))
 			return
@@ -66,7 +72,15 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusCreated, pretty.NewCreateMessage(pretty.CourseResult))
 		return
 	}
-	passed, err := srv.courseLogic.CheckResult(course)
+
+	courseResult, bestPoints, err := srv.db.CourseResult.ReplaceIfExist(result)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while replacing started course"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResult))
+		return
+	}
+
+	passed, err := srv.courseLogic.CheckResult(courseResult)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while checking result"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -81,8 +95,8 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		BestPoints uint   `json:"bestPoints"`
 	}{}
 	dto.Passed = passed
-	dto.Points = course.Points
-	dto.CourseId = course.CourseID
+	dto.Points = courseResult.Points
+	dto.CourseId = courseResult.CourseID
 	dto.BestPoints = bestPoints
 
 	writeResponseJson(w, http.StatusCreated, dto)
@@ -156,5 +170,105 @@ func (srv *Server) getStartedCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	writeResponseJson(w, http.StatusOK, dto)
+}
+
+func (srv *Server) courseRanking(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		srv.logger.Errorln(errors.New("id is empty"))
+		writeMessageResponse(w, http.StatusBadRequest, "provide Course id")
+		return
+	}
+	courseResults, err := srv.db.CourseResult.ListResultsForCourse(id)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while listing courseResults"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Users))
+		return
+	}
+
+	results, err := srv.converter.CourseResultConverter.ManyToDTO(courseResults)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while converting courseResults"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.CourseResults))
+		return
+	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Points < results[j].Points
+	})
+
+	writeResponseJson(w, http.StatusOK, results)
+}
+
+func (srv *Server) usersRanking(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	users, err := srv.db.User.GetAll()
+	if err != nil {
+		srv.logger.Errorln(errors.Wrap(err, "while listing users"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Users))
+		return
+	}
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Points < users[j].Points
+	})
+
+	writeResponseJson(w, http.StatusOK, srv.converter.ManyToUserStat(users))
+}
+
+func (srv *Server) userRanking(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	token, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	results, err := srv.db.CourseResult.ListBestResultsForUser(token.ID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while listing finished results"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
+		return
+	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Points < results[j].Points
+	})
+
+	dto, err := srv.converter.CourseResultConverter.ManyToDTO(results)
+	if err != nil {
+		srv.logger.Errorln(errors.New("cannot convert results to dto"))
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorConvert(pretty.CourseResult))
+		return
+	}
+	writeResponseJson(w, http.StatusOK, dto)
+}
+
+func (srv *Server) userRankingPerCourse(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	token, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	result, err := srv.db.CourseResult.GetBestResultForUserForCourse(token.ID, id)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while listing finished result"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
+		return
+	}
+
+	dto, err := srv.converter.CourseResultConverter.ToDTO(result)
+	if err != nil {
+		srv.logger.Errorln(errors.New("cannot convert result to dto"))
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorConvert(pretty.CourseResult))
+		return
+	}
 	writeResponseJson(w, http.StatusOK, dto)
 }

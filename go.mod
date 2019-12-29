@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
-	github.com/bradfitz/slice v0.0.0-20180809154707-2b758aa73013 // indirect
 	github.com/choria-io/go-validator v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -16,11 +15,8 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/madebyais/facebook-go-sdk v0.0.0-20171024011347-10fec9b83216
-	github.com/magiconair/properties v1.8.1
 	github.com/mcuadros/go-defaults v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
-	github.com/olahol/go-imageupload v0.0.0-20160503070439-09d2b92fa05e
 	github.com/pkg/errors v0.8.1
 	github.com/rs/xid v1.2.1
 	github.com/sirupsen/logrus v1.4.2

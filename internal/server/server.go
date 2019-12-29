@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/best-project/api/internal/converter"
@@ -12,8 +11,6 @@ import (
 	"github.com/madebyais/facebook-go-sdk"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -64,6 +61,7 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/user/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getUserByID)))
 	rtr.Path("/user/courses/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCoursesByUserID)))
 	rtr.Path("/user/ranking").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.userRanking)))
+	rtr.Path("/user/ranking/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.userRankingPerCourse)))
 
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/update").Methods(http.MethodPut).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.updateCourse)))
@@ -93,19 +91,11 @@ func (srv *Server) getImage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := vars["name"]
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%s", filename))
 	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Content-Length", r.Header.Get("Content-Length"))
 
-	file, err := ioutil.ReadFile(fmt.Sprintf("images/%s", filename))
-	if err != nil {
-		srv.logger.Errorln(err)
-		writeErrorResponse(w, http.StatusBadRequest, err)
-		return
-	}
-
-	//stream the body to the client without fully loading it into memory
-	io.Copy(w, bytes.NewReader(file))
+	http.ServeFile(w, r, fmt.Sprintf("images/%s", filename))
 }
 
 func (srv *Server) statusHandler(w http.ResponseWriter, r *http.Request) {

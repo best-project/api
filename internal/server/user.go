@@ -2,18 +2,14 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/server/pretty"
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
-	"github.com/rs/xid"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
-	"os"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -235,27 +231,11 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) getUserDataFromForm(r *http.Request) (*internal.UserDTO, error) {
-	if err := r.ParseMultipartForm(MB * 20); err != nil {
-		return nil, err
-	}
-	file, _, err := r.FormFile("image")
-	if err != nil {
-		return nil, errors.Wrap(err, "while getting image from form")
-	}
-	defer file.Close()
+	imgPath, _ := srv.saveImage(r)
+	//if err != nil {
+	//	return nil, errors.Wrap(err, "while getting image from form")
+	//}
 
-	imgPath := fmt.Sprintf("/images/%s.png", xid.New().String())
-	saveFile, err := os.Create(imgPath)
-	if err != nil {
-		return nil, err
-	}
-	defer saveFile.Close()
-
-	// Use io.Copy to just dump the response body to the file. This supports huge files
-	_, err = io.Copy(saveFile, file)
-	if err != nil {
-		return nil, err
-	}
 	userDTO := &internal.UserDTO{
 		Email:     r.FormValue("email"),
 		FirstName: r.FormValue("firstName"),
@@ -291,7 +271,7 @@ func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	pass, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while hashing password"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -308,51 +288,5 @@ func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
 		return
 	}
-
-	srv.logger.Infof("user %s was created", user.Email)
-	writeMessageResponse(w, http.StatusCreated, pretty.NewCreateMessage(pretty.User))
-}
-
-func (srv *Server) usersRanking(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-	users, err := srv.db.User.GetAll()
-	if err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while listing users"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Users))
-		return
-	}
-	sort.Slice(users, func(i, j int) bool {
-		return users[i].Points < users[j].Points
-	})
-
-	writeResponseJson(w, http.StatusOK, srv.converter.ManyToUserStat(users))
-}
-
-func (srv *Server) userRanking(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-	token, err := ParseJWT(r.Header.Get("Authorization"))
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
-		return
-	}
-
-	results, err := srv.db.CourseResult.ListFinishedForUser(token.ID)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrapf(err, "while listing finished results"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
-		return
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Points < results[j].Points
-	})
-
-	dto, err := srv.converter.CourseResultConverter.ManyToDTO(results)
-	if err != nil {
-		srv.logger.Errorln(errors.New("cannot convert results to dto"))
-		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorConvert(pretty.CourseResult))
-		return
-	}
-	writeResponseJson(w, http.StatusOK, dto)
+	writeMessageResponse(w, http.StatusOK, pretty.NewUpdateMessage(pretty.User))
 }

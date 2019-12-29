@@ -13,7 +13,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -35,11 +34,11 @@ func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "while saving image")
 	}
-
 	courseDTO.Image = imgPath
 	courseDTO.CourseID = r.FormValue("courseId")
 	courseDTO.Type = r.FormValue("type")
 	courseDTO.Language = r.FormValue("language")
+	courseDTO.Description = r.FormValue("description")
 	courseDTO.DifficultyLevel = r.FormValue("difficultyLevel")
 
 	if _, err := enum.ValidateString(courseDTO.Type, courseTypes); err != nil {
@@ -258,7 +257,6 @@ func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Course))
 		return
 	}
-
 	writeMessageResponse(w, http.StatusOK, pretty.NewUpdateMessage(pretty.Tasks))
 }
 func (srv *Server) removeTasksFromCourse(w http.ResponseWriter, r *http.Request) {
@@ -313,6 +311,31 @@ func (srv *Server) removeTasksFromCourse(w http.ResponseWriter, r *http.Request)
 	writeMessageResponse(w, http.StatusOK, pretty.NewRemoveMessage(pretty.Tasks))
 }
 
+func (srv *Server) applyBestPointsToCourses(w http.ResponseWriter, r *http.Request, courses []internal.CourseDTO) {
+	token, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	results, err := srv.db.CourseResult.ListBestResultsForUser(token.ID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while listing finished results"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.CourseResults))
+		return
+	}
+	for _, course := range courses {
+		for _, result := range results {
+			if course.CourseID == result.CourseID {
+				course.BestPoints = int(result.Points)
+			}
+		}
+	}
+
+	writeResponseJson(w, http.StatusOK, courses)
+}
+
 func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	courses, err := srv.db.Course.GetAll()
@@ -333,7 +356,7 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseJson(w, http.StatusOK, dto)
+	srv.applyBestPointsToCourses(w, r, dto)
 }
 
 func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
@@ -362,7 +385,7 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseJson(w, http.StatusOK, dto)
+	srv.applyBestPointsToCourses(w, r, dto)
 }
 
 func (srv *Server) getAllCoursesMetadata(w http.ResponseWriter, r *http.Request) {
@@ -381,7 +404,7 @@ func (srv *Server) getAllCoursesMetadata(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeResponseJson(w, http.StatusOK, dto)
+	srv.applyBestPointsToCourses(w, r, dto)
 }
 
 func (srv *Server) getUserCoursesMetadata(w http.ResponseWriter, r *http.Request) {
@@ -406,7 +429,7 @@ func (srv *Server) getUserCoursesMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeResponseJson(w, http.StatusOK, dto)
+	srv.applyBestPointsToCourses(w, r, dto)
 }
 
 func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
@@ -443,7 +466,7 @@ func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseJson(w, http.StatusOK, dto)
+	srv.applyBestPointsToCourses(w, r, dto)
 }
 
 func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
@@ -470,34 +493,5 @@ func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeResponseJson(w, http.StatusOK, dto)
-}
-
-func (srv *Server) courseRanking(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" {
-		srv.logger.Errorln(errors.New("id is empty"))
-		writeMessageResponse(w, http.StatusBadRequest, "provide Course id")
-		return
-	}
-	courseResults, err := srv.db.CourseResult.ListResultsForCourse(id)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while listing courseResults"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Users))
-		return
-	}
-
-	results, err := srv.converter.CourseResultConverter.ManyToDTO(courseResults)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while converting courseResults"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.CourseResults))
-		return
-	}
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Points < results[j].Points
-	})
-
-	writeResponseJson(w, http.StatusOK, results)
+	srv.applyBestPointsToCourses(w, r, []internal.CourseDTO{*dto})
 }

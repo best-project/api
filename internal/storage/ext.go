@@ -13,6 +13,8 @@ type Course interface {
 type CourseResult interface {
 	SaveResult(course *internal.CourseResult) error
 	ReplaceIfExist(result *internal.CourseResult) (*internal.CourseResult, uint, error)
+	ListBestResultsForUser(userID uint) ([]internal.CourseResult, error)
+	GetBestResultForUserForCourse(userID uint, courseID string) (*internal.CourseResult, error)
 	ListAllForUser(userID uint) ([]internal.CourseResult, error)
 	ListStartedForUser(userID uint) ([]internal.CourseResult, error)
 	ListFinishedForUser(userID uint) ([]internal.CourseResult, error)
