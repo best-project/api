@@ -128,19 +128,14 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
 	}
-	user.Token = token
-	user.RefreshToken = refreshToken
-	if err := srv.db.User.SaveUser(&user); err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
-		return
-	}
 	result, err := srv.converter.ToDTO(user)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while converting to dto"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.User))
 		return
 	}
+	result.Token = token
+	result.RefreshToken = refreshToken
 
 	writeResponseJson(w, http.StatusOK, result)
 }
@@ -174,18 +169,13 @@ func (srv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
 		return
 	}
-	user.Token = token
-	if err := srv.db.User.SaveUser(user); err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
-		return
-	}
 	result, err := srv.converter.ToDTO(*user)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while converting to dto"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorConvert(pretty.User))
 		return
 	}
+	result.Token = token
 
 	writeResponseJson(w, http.StatusOK, result)
 }
@@ -232,9 +222,6 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 func (srv *Server) getUserDataFromForm(r *http.Request) (*internal.UserDTO, error) {
 	imgPath, _ := srv.saveImage(r)
-	//if err != nil {
-	//	return nil, errors.Wrap(err, "while getting image from form")
-	//}
 
 	userDTO := &internal.UserDTO{
 		Email:     r.FormValue("email"),
@@ -271,18 +258,31 @@ func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pass, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
-	if err != nil {
-		srv.logger.Errorln(errors.Wrap(err, "while hashing password"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
-		return
+	var pass []byte
+	pass = []byte(user.Password)
+	if userData.Password != "" {
+		pass, err = bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
+		if err != nil {
+			srv.logger.Errorln(errors.Wrap(err, "while hashing password"))
+			writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+			return
+		}
+	}
+	user.Password = string(pass)
+
+	if user.Email != "" {
+		user.Email = userData.Email
+	}
+	if user.FirstName != "" {
+		user.FirstName = userData.FirstName
+	}
+	if user.LastName != "" {
+		user.LastName = userData.LastName
+	}
+	if user.Avatar != "" {
+		user.Avatar = userData.Avatar
 	}
 
-	user.Email = userData.Email
-	user.FirstName = userData.FirstName
-	user.LastName = userData.LastName
-	user.Avatar = userData.Avatar
-	user.Password = string(pass)
 	if err := srv.db.User.SaveUser(user); err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))

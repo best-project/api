@@ -66,6 +66,7 @@ func (srv *Server) Handle() http.Handler {
 	rtr.Path("/course/create").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.createCourse)))
 	rtr.Path("/course/update").Methods(http.MethodPut).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.updateCourse)))
 	rtr.Path("/course/task/add").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.addTasksToCourse)))
+	rtr.Path("/course/task/edit").Methods(http.MethodPost).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.editTask)))
 	rtr.Path("/course/task/remove/{id}").Methods(http.MethodDelete).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.removeTasksFromCourse)))
 
 	rtr.Path("/course/{id}").Methods(http.MethodGet).Handler(negroni.New(tokenCheckMiddleware, negroni.WrapFunc(srv.getCourse)))

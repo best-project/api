@@ -172,8 +172,7 @@ func (srv *Server) rateCourse(w http.ResponseWriter, r *http.Request) {
 
 	rate := float32(course.RateCounter) * course.Rate
 	rate += float32(rateDTO.Rate)
-
-	course.Rate = float32(rate / float32(course.RateCounter+1))
+	course.Rate = rate / float32(course.RateCounter+1)
 	course.RateCounter++
 
 	if err := srv.db.Course.SaveCourse(course, srv.xpForTask); err != nil {
@@ -255,6 +254,62 @@ func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
 	if err := srv.db.Course.SaveCourse(course, srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Course))
+		return
+	}
+	writeMessageResponse(w, http.StatusOK, pretty.NewUpdateMessage(pretty.Tasks))
+}
+
+func (srv *Server) editTask(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
+	user, err := ParseJWT(r.Header.Get("Authorization"))
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+	if err := r.ParseMultipartForm(MB * 50); err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing multipart file"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+	id := r.FormValue("id")
+	if id == "" {
+		srv.logger.Info("no task ID provided")
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
+		return
+	}
+
+	taskDTO := internal.TaskDTO{}
+	imgPath, err := srv.saveImage(r)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while parsing multipart file"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Task))
+		return
+	}
+	taskDTO.ID = id
+	taskDTO.Image = imgPath
+	taskDTO.CourseID = r.FormValue("courseId")
+	taskDTO.Word = r.FormValue("word")
+	taskDTO.Translate = r.FormValue("translate")
+	if err := srv.validator.Struct(taskDTO); err != nil {
+		e := err.(validator.ValidationErrors)
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.Course, e))
+		return
+	}
+	course, err := srv.db.Course.GetByID(taskDTO.CourseID)
+	if err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while getting by id %s", taskDTO.CourseID))
+		writeMessageResponse(w, http.StatusBadRequest, pretty.NewNotFoundError(pretty.Course))
+		return
+	}
+	if course.UserID != user.ID {
+		writeMessageResponse(w, http.StatusForbidden, pretty.NewForbiddenError(pretty.Course))
+		return
+	}
+	task := srv.converter.CourseConverter.TaskConverter.ConvertToModel(taskDTO)
+	if err := srv.db.Task.SaveTask(&task); err != nil {
+		srv.logger.Errorln(errors.Wrapf(err, "while saving task"))
+		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Task))
 		return
 	}
 	writeMessageResponse(w, http.StatusOK, pretty.NewUpdateMessage(pretty.Tasks))
