@@ -135,10 +135,18 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusForbidden, pretty.NewErrorGet(pretty.User))
 		return
 	}
-	courseModel.Description = course.Description
-	courseModel.Image = course.Image
-	courseModel.Language = course.Language
-	courseModel.Name = course.Name
+	if courseModel.Description != "" {
+		courseModel.Description = course.Description
+	}
+	if courseModel.Image != "" {
+		courseModel.Image = course.Image
+	}
+	if courseModel.Language != "" {
+		courseModel.Language = course.Language
+	}
+	if courseModel.Name != "" {
+		courseModel.Name = course.Name
+	}
 	courseModel.UpdatedAt = time.Now()
 
 	if err := srv.db.Course.SaveCourse(courseModel, srv.xpForTask); err != nil {
