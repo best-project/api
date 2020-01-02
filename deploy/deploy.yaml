@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "api"
+  labels:
+    app: "api"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "api"
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: "api"
+    spec:
+      containers:
+      - name: api
+        image: "eu.gcr.io/inzynierkempski/api:0.1.12"
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: PORT
+            value: "8080"
+          - name: DB_PORT
+            value: "3306"
+          - name: DB_NAME
+            value: "KtM68ItMjF"
+          - name: DB_HOST
+            value: "remotemysql.com"
+          - name: DB_USER
+            value: "KtM68ItMjF"
+          - name: DB_PASS
+            value: "R0YyfKfsin"
+          - name: FB_APP_KEY
+            value: "2595872383837249"
+          - name: FB_APP_SECRET
+            value: "c63fe1ea7aed77dc984daa198581bf76"
+          - name: INIT_DB
+            value: "true"
+          - name: PASS_PERCENT
+            value: "0.7"
+        volumeMounts:
+        - mountPath: /images
+          name: images-dir
+        ports:
+        - containerPort: 8080
+
+      volumes:
+      - name: images-dir
+        emptyDir:
+          sizeLimit: 5Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: "api"
+  name: "api"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: "api"
