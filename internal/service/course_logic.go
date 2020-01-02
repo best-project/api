@@ -4,6 +4,7 @@ import (
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/storage"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 type CourseLogic struct {
@@ -26,7 +27,7 @@ func NewCourseLogic(db *storage.Database, passPercent float32) *CourseLogic {
 }
 
 func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
-	course, err := c.db.Course.GetByID(result.CourseID)
+	course, err := c.db.Course.GetByID(strconv.Itoa(int(result.CourseID)))
 	if err != nil {
 		return false, errors.Wrap(err, "while getting course")
 	}

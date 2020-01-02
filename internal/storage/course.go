@@ -4,6 +4,7 @@ import (
 	"github.com/best-project/api/internal"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 type CourseDB struct {
@@ -22,7 +23,7 @@ func (c *CourseDB) GetByUserID(id uint) ([]*internal.Course, error) {
 
 	courses := make([]*internal.Course, 0)
 
-	if err := c.db.Where(&internal.Course{UserID: id}).Find(&courses).Error; err != nil {
+	if err := c.db.Preload("Task").Where(&internal.Course{UserID: id}).Find(&courses).Error; err != nil {
 		return nil, errors.Wrapf(err, "while getting courses for user id %d", id)
 	}
 
@@ -35,19 +36,19 @@ func (c *CourseDB) GetAll() ([]*internal.Course, error) {
 
 	courses := make([]*internal.Course, 0)
 
-	if err := c.db.Find(&courses).Error; err != nil {
+	if err := c.db.Preload("Task").Find(&courses).Error; err != nil {
 		return nil, errors.Wrapf(err, "while getting courses")
 	}
 
 	return courses, nil
 }
 
-func (c *CourseDB) GetByID(id uint) (*internal.Course, error) {
+func (c *CourseDB) GetByID(id string) (*internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 
 	course := &internal.Course{}
-	if err := c.db.First(course, id).Error; err != nil {
+	if err := c.db.Preload("Task").First(course, id).Error; err != nil {
 		return nil, err
 	}
 
@@ -58,15 +59,16 @@ func (u *CourseDB) Exist(courseID string) bool {
 	u.db.RLock()
 	defer u.db.RUnlock()
 	courses := make([]internal.Course, 0)
+	id, _ := strconv.Atoi(courseID)
 
-	u.db.Where(&internal.Course{CourseID: courseID}).Find(&courses)
+	u.db.Preload("Task").Where(id).Find(&courses)
 	if len(courses) > 0 {
 		return true
 	}
 	return false
 }
 
-func (c *CourseDB) GetManyByID(ids []uint) ([]*internal.Course, error) {
+func (c *CourseDB) GetManyByID(ids []string) ([]*internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 

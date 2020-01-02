@@ -3,6 +3,7 @@ package converter
 import (
 	"github.com/best-project/api/internal"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 type CourseResultConverter struct{}
@@ -21,10 +22,10 @@ func (c *CourseResultConverter) ToModel(dto *internal.CourseResultDTO) *internal
 	}
 }
 
-func (c *CourseResultConverter) FetchIDs(m []internal.CourseResult) []uint {
-	result := make([]uint, 0)
+func (c *CourseResultConverter) FetchIDs(m []internal.CourseResult) []string {
+	result := make([]string, 0)
 	for _, item := range m {
-		result = append(result, item.CourseID)
+		result = append(result, strconv.Itoa(int(item.CourseID)))
 	}
 
 	return unique(result)

@@ -3,6 +3,7 @@ package converter
 import (
 	"github.com/best-project/api/internal"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 type CourseConverter struct {
@@ -16,7 +17,7 @@ func NewCourseConverter(taskConverter *TaskConverter) *CourseConverter {
 }
 
 func (c *CourseConverter) ToModel(dto *internal.CourseDTO) *internal.Course {
-	return &internal.Course{
+	conv := &internal.Course{
 		Name:            dto.Name,
 		Description:     dto.Description,
 		DifficultyLevel: dto.DifficultyLevel,
@@ -28,6 +29,12 @@ func (c *CourseConverter) ToModel(dto *internal.CourseDTO) *internal.Course {
 		UserID:          dto.UserID,
 		Task:            c.TaskConverter.ManyToModel(dto.Data),
 	}
+	if dto.CourseID != "" {
+		id, _ := strconv.Atoi(dto.CourseID)
+		conv.ID = uint(id)
+	}
+
+	return conv
 }
 
 func (c *CourseConverter) ManyToModel(dtos []internal.CourseDTO) []internal.Course {
@@ -42,7 +49,7 @@ func (c *CourseConverter) ManyToModel(dtos []internal.CourseDTO) []internal.Cour
 
 func (c *CourseConverter) ToDTO(dto *internal.Course) (*internal.CourseDTO, error) {
 	return &internal.CourseDTO{
-		CourseID:        dto.CourseID,
+		CourseID:        strconv.Itoa(int(dto.ID)),
 		Type:            dto.Type,
 		Name:            dto.Name,
 		Rate:            dto.Rate,

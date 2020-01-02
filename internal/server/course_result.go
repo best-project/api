@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"sort"
+	"strconv"
 )
 
 func (srv *Server) getCourseResultData(body io.ReadCloser) (*internal.CourseResultDTO, error) {
@@ -46,7 +47,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorValidate(pretty.CourseResult, e))
 		return
 	}
-	if !srv.db.Course.Exist(courseDTO.CourseID) {
+	if !srv.db.Course.Exist(strconv.Itoa(int(courseDTO.CourseID))) {
 		srv.logger.Errorln(errors.New("course not exist"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewNotFoundError(pretty.Course))
 		return
@@ -96,7 +97,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 	}{}
 	dto.Passed = passed
 	dto.Points = courseResult.Points
-	dto.CourseId = courseResult.CourseID
+	dto.CourseId = strconv.Itoa(int(courseResult.CourseID))
 	dto.BestPoints = bestPoints
 
 	writeResponseJson(w, http.StatusCreated, dto)
@@ -121,11 +122,6 @@ func (srv *Server) getFinishedCourses(w http.ResponseWriter, r *http.Request) {
 		srv.logger.Errorln(errors.Wrapf(err, "while getting courses"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Courses))
 		return
-	}
-
-	mappedTasks := srv.db.Task.MapTasksForCourses(result)
-	for _, course := range result {
-		course.Task = mappedTasks[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(result)
@@ -156,11 +152,6 @@ func (srv *Server) getStartedCourses(w http.ResponseWriter, r *http.Request) {
 		srv.logger.Errorln(errors.Wrapf(err, "while getting courses"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Courses))
 		return
-	}
-
-	mappedTasks := srv.db.Task.MapTasksForCourses(result)
-	for _, course := range result {
-		course.Task = mappedTasks[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(result)

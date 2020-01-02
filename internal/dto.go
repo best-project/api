@@ -20,17 +20,17 @@ type CourseDTO struct {
 }
 
 type CourseResultDTO struct {
-	UserID   uint `json:"userId"`
-	CourseID uint `json:"courseId" validate:"required"`
+	Phase    string `json:"phase" validate:"required"`
+	CourseID uint   `json:"courseId" validate:"required"`
+	UserID   uint   `json:"userId"`
 
-	Phase  string `json:"phase" validate:"required"`
-	Points uint   `json:"points"`
-	Passed bool   `json:"passed"`
+	Points uint `json:"points"`
+	Passed bool `json:"passed"`
 }
 
 type TaskDTO struct {
 	ID        string `json:"id"`
-	CourseID  uint   `json:"courseId"`
+	CourseID  string `json:"courseId"`
 	Word      string `json:"word" validate:"required"`
 	Translate string `json:"translate" validate:"required"`
 	Image     string `json:"image"`

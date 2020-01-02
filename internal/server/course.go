@@ -347,7 +347,7 @@ func (srv *Server) removeTasksFromCourse(w http.ResponseWriter, r *http.Request)
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.Task))
 		return
 	}
-	course, err := srv.db.Course.GetByID(task.CourseID)
+	course, err := srv.db.Course.GetByID(strconv.Itoa(int(task.CourseID)))
 	if err != nil {
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewNotFoundError(pretty.Course))
 		return
@@ -387,7 +387,8 @@ func (srv *Server) applyBestPointsToCourses(w http.ResponseWriter, r *http.Reque
 	}
 	for _, course := range courses {
 		for _, result := range results {
-			if course.CourseID == result.CourseID {
+			r, _ := strconv.Atoi(course.CourseID)
+			if uint(r) == result.CourseID {
 				course.BestPoints = int(result.Points)
 			}
 		}
@@ -404,11 +405,6 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorList(pretty.Courses))
 		return
 	}
-	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
-	for _, course := range courses {
-		course.Task = mappedTasks[course.CourseID]
-	}
-
 	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while converting courses to dto"))
@@ -432,10 +428,6 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 		srv.logger.Errorln(errors.Wrapf(err, "while getting course"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.Course))
 		return
-	}
-	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
-	for _, course := range courses {
-		course.Task = mappedTasks[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)
@@ -513,10 +505,6 @@ func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.Course))
 		return
-	}
-	mappedTasks := srv.db.Task.MapTasksForCourses(courses)
-	for _, course := range courses {
-		course.Task = mappedTasks[course.CourseID]
 	}
 
 	dto, err := srv.converter.CourseConverter.ManyToDTO(courses)

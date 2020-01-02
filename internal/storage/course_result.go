@@ -4,6 +4,7 @@ import (
 	"github.com/best-project/api/internal"
 	"github.com/jinzhu/gorm"
 	"sort"
+	"strconv"
 )
 
 type CourseResultDB struct {
@@ -19,7 +20,8 @@ func (c *CourseResultDB) ListResultsForCourse(courseID string) ([]internal.Cours
 	defer c.db.RUnlock()
 
 	results := make([]internal.CourseResult, 0)
-	err := c.db.Where(internal.CourseResult{CourseID: courseID, Phase: internal.FinishedPhase}).Find(&results).Error
+	id, _ := strconv.Atoi(courseID)
+	err := c.db.Where(internal.CourseResult{CourseID: uint(id), Phase: internal.FinishedPhase}).Find(&results).Error
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +67,12 @@ func (c *CourseResultDB) ListBestResultsForUser(userID uint) ([]internal.CourseR
 
 	topResults := make(map[string]internal.CourseResult, 0)
 	for _, result := range results {
-		if topResult, ok := topResults[result.CourseID]; !ok {
-			topResults[result.CourseID] = result
+		uid := strconv.Itoa(int(result.CourseID))
+		if topResult, ok := topResults[uid]; !ok {
+			topResults[uid] = result
 		} else {
 			if result.Points > topResult.Points {
-				topResults[result.CourseID] = result
+				topResults[uid] = result
 			}
 		}
 	}
@@ -86,8 +89,10 @@ func (c *CourseResultDB) GetBestResultForUserForCourse(userID uint, courseID str
 	c.db.RLock()
 	defer c.db.RUnlock()
 
+	id, _ := strconv.Atoi(courseID)
+
 	results := make([]internal.CourseResult, 0)
-	err := c.db.Where(internal.CourseResult{UserID: userID, CourseID: courseID, Phase: internal.FinishedPhase}).Find(&results).Error
+	err := c.db.Where(internal.CourseResult{UserID: userID, CourseID: uint(id), Phase: internal.FinishedPhase}).Find(&results).Error
 	if err != nil {
 		return nil, err
 	}

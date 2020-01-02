@@ -8,11 +8,12 @@ import (
 type TaskConverter struct{}
 
 func (*TaskConverter) ConvertToModel(dto internal.TaskDTO) internal.Task {
+	id, _ := strconv.Atoi(dto.CourseID)
 	return internal.Task{
 		Image:     dto.Image,
 		Translate: dto.Translate,
 		Word:      dto.Word,
-		CourseID:  dto.CourseID,
+		CourseID:  uint(id),
 	}
 }
 
@@ -29,10 +30,10 @@ func (t *TaskConverter) ManyToModel(dto []internal.TaskDTO) []internal.Task {
 func (*TaskConverter) ConvertToDTO(dto internal.Task) internal.TaskDTO {
 	return internal.TaskDTO{
 		ID:        strconv.Itoa(int(dto.ID)),
+		CourseID:  strconv.Itoa(int(dto.ID)),
 		Image:     dto.Image,
 		Translate: dto.Translate,
 		Word:      dto.Word,
-		CourseID:  dto.CourseID,
 	}
 }
 

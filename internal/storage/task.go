@@ -20,21 +20,21 @@ func (c *TaskDB) GetTasksForCourse(course *internal.Course) []internal.Task {
 	defer c.db.RUnlock()
 
 	tasks := make([]internal.Task, 0)
-	c.db.Where(&internal.Task{CourseID: course.CourseID}).Find(&tasks)
+	c.db.Where(&internal.Task{CourseID: course.ID}).Find(&tasks)
 
 	return tasks
 }
 
-func (c *TaskDB) MapTasksForCourses(courses []*internal.Course) map[string][]internal.Task {
+func (c *TaskDB) MapTasksForCourses(courses []*internal.Course) map[uint][]internal.Task {
 	c.db.RLock()
 	defer c.db.RUnlock()
 
-	courseTasks := make(map[string][]internal.Task, 0)
+	courseTasks := make(map[uint][]internal.Task, 0)
 	tasks := make([]internal.Task, 0)
 
 	for _, course := range courses {
-		c.db.Where(&internal.Task{CourseID: course.CourseID}).Find(&tasks)
-		courseTasks[course.CourseID] = tasks
+		c.db.Where(&internal.Task{CourseID: course.ID}).Find(&tasks)
+		courseTasks[course.ID] = tasks
 	}
 
 	return courseTasks
