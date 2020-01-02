@@ -49,7 +49,7 @@ type UserDTO struct {
 	ID int `json:"id"`
 
 	Level     int `json:"level"`
-	NextLevel int `json:"nextLevel"`
+	NextLevel string `json:"nextLevel"`
 	Points    int `json:"points"`
 }
 

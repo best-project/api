@@ -61,6 +61,6 @@ type User struct {
 	Avatar    string
 
 	Level     int
-	NextLevel int
+	NextLevel string
 	Points    int
 }

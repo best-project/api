@@ -125,7 +125,7 @@ func (c *CourseResultDB) ReplaceIfExist(result *internal.CourseResult) (*interna
 		return results[i].Points < results[j].Points
 	})
 	if results[0].Points > result.Points {
-		return result, results[0].Points, nil
+		return &results[0], results[0].Points, nil
 	}
 
 	return result, result.Points, nil

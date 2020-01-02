@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/best-project/api/internal/storage"
 	"github.com/pkg/errors"
@@ -16,7 +17,6 @@ var firstLevel = 100
 
 type CourseResultHandler interface {
 	CheckResult(result *internal.CourseResult) (bool, error)
-	PointForNextLevel(points int) int
 }
 
 func NewCourseLogic(db *storage.Database, passPercent float32) *CourseLogic {
@@ -53,24 +53,19 @@ func (c *CourseLogic) CheckResult(result *internal.CourseResult) (bool, error) {
 	return true, nil
 }
 
-func (c *CourseLogic) PointForNextLevel(points int) int {
-	_, nextLvl := c.calculateLevel(points)
-	return nextLvl
-}
-
 func (c *CourseLogic) isWon(points, maxPoints uint) bool {
 	result := float32(points) / float32(maxPoints)
 	return result > c.passPercent
 }
 
-func (c *CourseLogic) calculateLevel(points int) (int, int) {
+func (c *CourseLogic) calculateLevel(points int) (int, string) {
 	nextLvl := 0
 	for i := 1; true; i++ {
 		xpNeeded := int(float64(firstLevel+10*i) * 1.2)
 		nextLvl += xpNeeded
 		if nextLvl > points {
-			return i, xpNeeded - points
+			return i, fmt.Sprintf("%.2f", float64(points) / float64(xpNeeded))
 		}
 	}
-	return 1, nextLvl
+	return 1, "0.00"
 }

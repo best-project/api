@@ -209,7 +209,7 @@ func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
 
 	user.Password = string(pass)
 	user.Level = 1
-	user.NextLevel = srv.courseLogic.PointForNextLevel(user.Points)
+	user.NextLevel = "0.00"
 	if err := srv.db.User.SaveUser(user); err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while saving user"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.User))
