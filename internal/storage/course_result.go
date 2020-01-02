@@ -119,7 +119,7 @@ func (c *CourseResultDB) ReplaceIfExist(result *internal.CourseResult) (*interna
 		return nil, 0, err
 	}
 	if len(results) < 1 {
-		return result, 0, nil
+		return result, result.Points, nil
 	}
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Points < results[j].Points

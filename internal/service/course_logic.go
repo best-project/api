@@ -69,7 +69,7 @@ func (c *CourseLogic) calculateLevel(points int) (int, int) {
 		xpNeeded := int(float64(firstLevel+10*i) * 1.2)
 		nextLvl += xpNeeded
 		if nextLvl > points {
-			return i, xpNeeded
+			return i, xpNeeded - points
 		}
 	}
 	return 1, nextLvl

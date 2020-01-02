@@ -47,7 +47,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorValidate(pretty.CourseResult, e))
 		return
 	}
-	if !srv.db.Course.Exist(strconv.Itoa(int(courseDTO.CourseID))) {
+	if !srv.db.Course.Exist(courseDTO.CourseID) {
 		srv.logger.Errorln(errors.New("course not exist"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewNotFoundError(pretty.Course))
 		return
@@ -81,6 +81,7 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	courseResult.UserID = user.ID
 	passed, err := srv.courseLogic.CheckResult(courseResult)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while checking result"))

@@ -13,9 +13,10 @@ func NewCourseResultConverter() *CourseResultConverter {
 }
 
 func (c *CourseResultConverter) ToModel(dto *internal.CourseResultDTO) *internal.CourseResult {
+	id, _ := strconv.Atoi(dto.CourseID)
 	return &internal.CourseResult{
 		Points:   dto.Points,
-		CourseID: dto.CourseID,
+		CourseID: uint(id),
 		UserID:   dto.UserID,
 		Phase:    dto.Phase,
 		Passed:   dto.Passed,
@@ -43,7 +44,7 @@ func (c *CourseResultConverter) ManyToModel(dtos []internal.CourseResultDTO) []i
 
 func (c *CourseResultConverter) ToDTO(dto *internal.CourseResult) (*internal.CourseResultDTO, error) {
 	return &internal.CourseResultDTO{
-		CourseID: dto.CourseID,
+		CourseID: strconv.Itoa(int(dto.CourseID)),
 		Points:   dto.Points,
 		UserID:   dto.UserID,
 		Phase:    dto.Phase,

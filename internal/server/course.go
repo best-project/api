@@ -28,10 +28,10 @@ func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	if err := r.ParseMultipartForm(MB * 20); err != nil {
 		return nil, err
 	}
-	courseDTO.Name = r.FormValue("name")
 
 	imgPath, _ := srv.saveImage(r)
 	courseDTO.Image = imgPath
+	courseDTO.Name = r.FormValue("name")
 	courseDTO.CourseID = r.FormValue("courseId")
 	courseDTO.Type = r.FormValue("type")
 	courseDTO.Language = r.FormValue("language")
@@ -41,17 +41,6 @@ func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	if _, err := enum.ValidateString(courseDTO.Type, courseTypes); err != nil {
 		return nil, errors.Wrapf(err, "invalid course type %s", courseDTO.Type)
 	}
-	data := srv.ParseFormCollection(r, "data")
-	tasksDTO := make([]internal.TaskDTO, 0)
-	taskDTO := internal.TaskDTO{}
-
-	for _, task := range data {
-		taskDTO.Image = task["image"]
-		taskDTO.Word = task["word"]
-		taskDTO.Translate = task["translate"]
-		tasksDTO = append(tasksDTO, taskDTO)
-	}
-	courseDTO.Data = tasksDTO
 
 	return courseDTO, nil
 }
@@ -119,29 +108,31 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !srv.db.Course.Exist(course.CourseID) {
+		srv.logger.Warn("course not exist")
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewNotFoundError(pretty.Course))
 		return
 	}
-	if course.UserID != user.ID {
-		writeMessageResponse(w, http.StatusForbidden, pretty.NewForbiddenError(pretty.Course))
-		return
-	}
-
 	courseModel, err := srv.db.Course.GetByID(course.CourseID)
 	if err != nil {
 		writeMessageResponse(w, http.StatusForbidden, pretty.NewErrorGet(pretty.User))
 		return
 	}
-	if courseModel.Description != "" {
+	if courseModel.UserID != user.ID {
+		srv.logger.Warnf("%d != %d", courseModel.UserID, user.ID)
+		writeMessageResponse(w, http.StatusForbidden, pretty.NewForbiddenError(pretty.Course))
+		return
+	}
+
+	if course.Description != "" {
 		courseModel.Description = course.Description
 	}
-	if courseModel.Image != "" {
+	if course.Image != "" {
 		courseModel.Image = course.Image
 	}
-	if courseModel.Language != "" {
+	if course.Language != "" {
 		courseModel.Language = course.Language
 	}
-	if courseModel.Name != "" {
+	if course.Name != "" {
 		courseModel.Name = course.Name
 	}
 	courseModel.UpdatedAt = time.Now()

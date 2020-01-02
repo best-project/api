@@ -21,7 +21,7 @@ type CourseDTO struct {
 
 type CourseResultDTO struct {
 	Phase    string `json:"phase" validate:"required"`
-	CourseID uint   `json:"courseId" validate:"required"`
+	CourseID string `json:"courseId" validate:"required"`
 	UserID   uint   `json:"userId"`
 
 	Points uint `json:"points"`
