@@ -45,7 +45,7 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "while hashing pass")
 		}
-		userDB.SaveUser(&internal.User{Model: gorm.Model{ID: uint(1)}, FirstName: "Jan", LastName: "Nowak", Email: "root@o2.pl", Password: string(pass), Level: 1, Points: 0, Avatar: "https://www.pngtube.com/myfile/detail/479-4792237_gopher-dragon-clipart-go-gopher-logos.png"})
+		userDB.SaveUser(&internal.User{ID: uint(1), FirstName: "Jan", LastName: "Nowak", Email: "root@o2.pl", Password: string(pass), Level: 1, Points: 0, Avatar: "https://www.pngtube.com/myfile/detail/479-4792237_gopher-dragon-clipart-go-gopher-logos.png"})
 
 		courseDB.SaveCourse(&internal.Course{Name: "Kultura", UserID: 1, DifficultyLevel: "normal", Language: "en", Rate: 4.0,
 			Description: "Słowo kultura ma wiele znaczeń. Interpretuje się ją w różny sposób przez przedstawicieli wielu dziedzin. Kulturę można określić jako ogół wytworów ludzi, zarówno fizycznych, materialnych, jak i duchowych, symbolicznych.",

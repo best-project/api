@@ -1,11 +1,13 @@
 package internal
 
 import (
-	"github.com/jinzhu/gorm"
+	"time"
 )
 
 type Course struct {
-	gorm.Model
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 
 	UserID          uint
 	Name            string
@@ -27,7 +29,9 @@ const (
 )
 
 type CourseResult struct {
-	gorm.Model
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 
 	UserID   uint
 	CourseID uint
@@ -43,7 +47,9 @@ const (
 )
 
 type Task struct {
-	gorm.Model
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 
 	CourseID  uint
 	Word      string
@@ -52,7 +58,9 @@ type Task struct {
 }
 
 type User struct {
-	gorm.Model
+	ID        uint `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 
 	Email     string
 	FirstName string

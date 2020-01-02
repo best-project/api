@@ -48,9 +48,9 @@ type UserDTO struct {
 
 	ID int `json:"id"`
 
-	Level     int `json:"level"`
+	Level     int    `json:"level"`
 	NextLevel string `json:"nextLevel"`
-	Points    int `json:"points"`
+	Points    int    `json:"points"`
 }
 
 type UserStatDTO struct {

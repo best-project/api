@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 )
 
 func (srv *Server) getCourseResultData(body io.ReadCloser) (*internal.CourseResultDTO, error) {
@@ -63,7 +64,8 @@ func (srv *Server) saveResult(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(results) == 1 {
-			result.Model = results[0].Model
+			result.ID = results[0].ID
+			result.UpdatedAt = time.Now()
 		}
 		if err := srv.db.CourseResult.SaveResult(result); err != nil {
 			srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
