@@ -65,7 +65,7 @@ func (c *CourseLogic) isWon(points, maxPoints uint) bool {
 func (c *CourseLogic) calculateLevel(points int) (int, int) {
 	nextLvl := 0
 	for i := 1; true; i++ {
-		xpNeeded := int(float64(firstLevel+10*i) * float64(1.2))
+		xpNeeded := int(float64(firstLevel+10*i) * 1.2)
 		nextLvl += xpNeeded
 		if nextLvl > points {
 			return i, xpNeeded

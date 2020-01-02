@@ -6,9 +6,9 @@ type Course interface {
 	SaveCourse(course *internal.Course, xpForTask int) error
 	GetByUserID(id uint) ([]*internal.Course, error)
 	GetAll() ([]*internal.Course, error)
-	GetByID(id string) (*internal.Course, error)
+	GetByID(id uint) (*internal.Course, error)
 	Exist(courseID string) bool
-	GetManyByID(ids []string) ([]*internal.Course, error)
+	GetManyByID(ids []uint) ([]*internal.Course, error)
 }
 type CourseResult interface {
 	SaveResult(course *internal.CourseResult) error

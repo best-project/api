@@ -40,6 +40,7 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 		entry.Info("Clearing database")
 		db.DropTableIfExists(tables...)
 		db.CreateTable(tables...)
+		initRelations(db)
 		pass, err := bcrypt.GenerateFromPassword([]byte("root1234"), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, errors.Wrap(err, "while hashing pass")
@@ -255,4 +256,11 @@ func NewDatabase(cfg *config.Config, entry *logrus.Logger) (*Database, error) {
 	}
 
 	return &Database{userDB, taskDB, courseDB, courseResultsDB}, nil
+}
+
+func initRelations(db *gorm.DB) {
+	db.Model(&internal.Course{}).AddForeignKey("user_id", "users(id)", "CASCADE", "CASCADE")
+	db.Model(&internal.Task{}).AddForeignKey("course_id", "courses(id)", "CASCADE", "CASCADE")
+	db.Model(&internal.CourseResult{}).AddForeignKey("user_id", "users(id)", "CASCADE", "CASCADE")
+	db.Model(&internal.CourseResult{}).AddForeignKey("course_id", "courses(id)", "CASCADE", "CASCADE")
 }

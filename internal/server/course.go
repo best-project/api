@@ -30,10 +30,7 @@ func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	}
 	courseDTO.Name = r.FormValue("name")
 
-	imgPath, err := srv.saveImage(r)
-	if err != nil {
-		return nil, errors.Wrap(err, "while saving image")
-	}
+	imgPath, _ := srv.saveImage(r)
 	courseDTO.Image = imgPath
 	courseDTO.CourseID = r.FormValue("courseId")
 	courseDTO.Type = r.FormValue("type")
@@ -47,8 +44,8 @@ func (srv *Server) getCourseData(r *http.Request) (*internal.CourseDTO, error) {
 	data := srv.ParseFormCollection(r, "data")
 	tasksDTO := make([]internal.TaskDTO, 0)
 	taskDTO := internal.TaskDTO{}
+
 	for _, task := range data {
-		taskDTO.CourseID = task["courseId"]
 		taskDTO.Image = task["image"]
 		taskDTO.Word = task["word"]
 		taskDTO.Translate = task["translate"]

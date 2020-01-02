@@ -72,13 +72,17 @@ func (u *Converter) ToDTO(dto internal.User) (*internal.UserDTO, error) {
 	}, nil
 }
 
-func unique(strings []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, entry := range strings {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
+func unique(ids []uint) []uint {
+	list := make([]uint, 0)
+	unique := true
+	for _, id := range ids {
+		for _, existing := range list {
+			if id == existing {
+				unique = false
+			}
+		}
+		if unique {
+			list = append(list, id)
 		}
 	}
 	return list

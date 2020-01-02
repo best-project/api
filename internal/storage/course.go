@@ -1,11 +1,9 @@
 package storage
 
 import (
-	"fmt"
 	"github.com/best-project/api/internal"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-	"github.com/rs/xid"
 )
 
 type CourseDB struct {
@@ -13,21 +11,9 @@ type CourseDB struct {
 }
 
 func (c *CourseDB) SaveCourse(course *internal.Course, xpForTask int) error {
-	if course.CourseID == "" {
-		guid := xid.New()
-		uid := guid.String()
-		course.CourseID = uid
-	}
-	tasks := course.Task
-	course.Task = []internal.Task{}
-	course.MaxPoints = len(tasks) * xpForTask
+	course.MaxPoints = len(course.Task) * xpForTask
 
-	c.db.Save(course)
-	for _, task := range tasks {
-		task.CourseID = course.CourseID
-		c.db.Save(&task)
-	}
-	return nil
+	return c.db.Save(course).Error
 }
 
 func (c *CourseDB) GetByUserID(id uint) ([]*internal.Course, error) {
@@ -56,18 +42,16 @@ func (c *CourseDB) GetAll() ([]*internal.Course, error) {
 	return courses, nil
 }
 
-func (c *CourseDB) GetByID(id string) (*internal.Course, error) {
+func (c *CourseDB) GetByID(id uint) (*internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 
-	courses := make([]internal.Course, 0)
-	c.db.Where(&internal.Course{CourseID: id}).Find(&courses)
-
-	if len(courses) == 0 {
-		return nil, fmt.Errorf("course with id: %s not exit", id)
+	course := &internal.Course{}
+	if err := c.db.First(course, id).Error; err != nil {
+		return nil, err
 	}
 
-	return &courses[0], nil
+	return course, nil
 }
 
 func (u *CourseDB) Exist(courseID string) bool {
@@ -82,7 +66,7 @@ func (u *CourseDB) Exist(courseID string) bool {
 	return false
 }
 
-func (c *CourseDB) GetManyByID(ids []string) ([]*internal.Course, error) {
+func (c *CourseDB) GetManyByID(ids []uint) ([]*internal.Course, error) {
 	c.db.RLock()
 	defer c.db.RUnlock()
 

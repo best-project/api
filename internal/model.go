@@ -11,7 +11,7 @@ type Course struct {
 	UserID          uint
 	Name            string
 	Description     string
-	Image           string `sql:"size:2000"`
+	Image           string
 	Task            []Task
 	Language        string
 	DifficultyLevel string
@@ -31,7 +31,7 @@ type CourseResult struct {
 	gorm.Model
 
 	UserID   uint
-	CourseID string
+	CourseID uint
 
 	Points uint
 	Phase  string
@@ -46,7 +46,7 @@ const (
 type Task struct {
 	gorm.Model
 
-	CourseID  string
+	CourseID  uint
 	Word      string
 	Translate string
 	Image     string
