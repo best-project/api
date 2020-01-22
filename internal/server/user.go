@@ -25,7 +25,6 @@ func (srv *Server) readUserData(body io.ReadCloser) (*internal.UserDTO, error) {
 }
 
 func (srv *Server) getUserByToken(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	token, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -51,7 +50,6 @@ func (srv *Server) getUserByToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) getUserByID(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -80,7 +78,6 @@ func (srv *Server) getUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	userDTO := &struct {
 		Email    string `json:"email" validate:"required,email,max=250"`
 		Password string `json:"password" validate:"required,min=8,max=250"`
@@ -141,7 +138,6 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	token := vars["token"]
 	if token == "" {
@@ -181,7 +177,6 @@ func (srv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) createUser(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	userData, err := srv.readUserData(r.Body)
 	if err != nil {
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.User))
@@ -234,7 +229,6 @@ func (srv *Server) getUserDataFromForm(r *http.Request) (*internal.UserDTO, erro
 }
 
 func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	userData, err := srv.getUserDataFromForm(r)
 	if err != nil {
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.User))

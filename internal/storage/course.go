@@ -14,7 +14,7 @@ type CourseDB struct {
 func (c *CourseDB) SaveCourse(course *internal.Course, xpForTask int) error {
 	course.MaxPoints = len(course.Task) * xpForTask
 
-	return c.db.Save(course).Error
+	return c.db.Preload("Task").Save(course).Error
 }
 
 func (c *CourseDB) GetByUserID(id uint) ([]*internal.Course, error) {

@@ -56,7 +56,6 @@ func (srv *Server) getTasksData(body io.ReadCloser) ([]internal.TaskDTO, error) 
 }
 
 func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	user, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -89,7 +88,6 @@ func (srv *Server) createCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	user, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -147,7 +145,6 @@ func (srv *Server) updateCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) rateCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	rateDTO := struct {
 		Rate     int    `json:"rate"`
 		CourseID string `json:"courseId"`
@@ -204,7 +201,6 @@ func (srv *Server) saveImage(r *http.Request) (string, error) {
 }
 
 func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	user, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -221,8 +217,6 @@ func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
 	imgPath, err := srv.saveImage(r)
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing multipart file"))
-		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorSave(pretty.Task))
-		return
 	}
 	taskDTO.Image = imgPath
 	taskDTO.CourseID = r.FormValue("courseId")
@@ -256,7 +250,6 @@ func (srv *Server) addTasksToCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) editTask(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	user, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -311,7 +304,6 @@ func (srv *Server) editTask(w http.ResponseWriter, r *http.Request) {
 	writeMessageResponse(w, http.StatusOK, pretty.NewUpdateMessage(pretty.Tasks))
 }
 func (srv *Server) removeTasksFromCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -353,6 +345,15 @@ func (srv *Server) removeTasksFromCourse(w http.ResponseWriter, r *http.Request)
 	}
 	course.MaxPoints -= srv.xpForTask
 
+	tasks := make([]internal.Task, 0)
+	for _, t :=  range course.Task {
+		if t.ID == task.ID {
+			continue
+		}
+		tasks = append(tasks, t)
+	}
+	course.Task = tasks
+
 	if err := srv.db.Course.SaveCourse(course, srv.xpForTask); err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while saving course"))
 		writeMessageResponse(w, http.StatusInternalServerError, "")
@@ -389,7 +390,6 @@ func (srv *Server) applyBestPointsToCourses(w http.ResponseWriter, r *http.Reque
 }
 
 func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	courses, err := srv.db.Course.GetAll()
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while getting all courses"))
@@ -407,7 +407,6 @@ func (srv *Server) getAllCourses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	user, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -432,7 +431,6 @@ func (srv *Server) getUserCourses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) getAllCoursesMetadata(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	courses, err := srv.db.Course.GetAll()
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while getting course"))
@@ -451,7 +449,6 @@ func (srv *Server) getAllCoursesMetadata(w http.ResponseWriter, r *http.Request)
 }
 
 func (srv *Server) getUserCoursesMetadata(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	user, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -476,7 +473,6 @@ func (srv *Server) getUserCoursesMetadata(w http.ResponseWriter, r *http.Request
 }
 
 func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -509,7 +505,6 @@ func (srv *Server) getCoursesByUserID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) getCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {

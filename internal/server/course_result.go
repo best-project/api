@@ -168,7 +168,6 @@ func (srv *Server) getStartedCourses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) courseRanking(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if id == "" {
@@ -197,7 +196,6 @@ func (srv *Server) courseRanking(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) usersRanking(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	users, err := srv.db.User.GetAll()
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while listing users"))
@@ -212,7 +210,6 @@ func (srv *Server) usersRanking(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) userRanking(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	token, err := ParseJWT(r.Header.Get("Authorization"))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrapf(err, "while parsing jwt token"))
@@ -240,7 +237,6 @@ func (srv *Server) userRanking(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *Server) userRankingPerCourse(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 
