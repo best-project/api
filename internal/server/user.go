@@ -113,7 +113,7 @@ func (srv *Server) loginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute*30).Unix()))
+	token, err := NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Hour).Unix()))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while creating token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -159,7 +159,7 @@ func (srv *Server) refreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	now := time.Now()
-	token, err = NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Minute*30).Unix()))
+	token, err = NewJWT(NewCustomPayload(&UserClaim{ID: user.ID, Email: user.Email}, now.Add(time.Hour).Unix()))
 	if err != nil {
 		srv.logger.Errorln(errors.Wrap(err, "while creating token"))
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
@@ -234,6 +234,7 @@ func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewDecodeError(pretty.User))
 		return
 	}
+	userData.Password = "dxxdxdxdxd"
 	if err := srv.validator.Struct(userData); err != nil {
 		e := err.(validator.ValidationErrors)
 		writeMessageResponse(w, http.StatusBadRequest, pretty.NewErrorValidate(pretty.User, e))
@@ -251,18 +252,6 @@ func (srv *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		writeMessageResponse(w, http.StatusInternalServerError, pretty.NewErrorGet(pretty.User))
 		return
 	}
-
-	var pass []byte
-	pass = []byte(user.Password)
-	if userData.Password != "" {
-		pass, err = bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
-		if err != nil {
-			srv.logger.Errorln(errors.Wrap(err, "while hashing password"))
-			writeMessageResponse(w, http.StatusInternalServerError, pretty.NewInternalError())
-			return
-		}
-	}
-	user.Password = string(pass)
 
 	if user.Email != "" {
 		user.Email = userData.Email
