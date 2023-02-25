@@ -22,6 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/urfave/negroni v1.0.0
 	github.com/vrischmann/envconfig v1.2.0
-	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c
+	golang.org/x/crypto v0.1.0
 	gopkg.in/go-playground/assert.v1 v1.2.1
+	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
